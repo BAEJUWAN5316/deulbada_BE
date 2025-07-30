@@ -1,26 +1,30 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
-import re
-User = get_user_model()
+from .models import User
 
+# 프로필 설정에 사용될 Serializer
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['account_id', 'username', 'bio', 'profile_image']
+
+    def validate_profile_image(self, value):
+        max_size = 5 * 1024 * 1024  # 5MB 제한
+        if value.size > max_size:
+            raise serializers.ValidationError("이미지 파일은 5MB 이하만 업로드 가능합니다.")
+        return value
+
+    def update(self, instance, validated_data):
+        instance.account_id = validated_data.get('account_id', instance.account_id)
+        instance.username = validated_data.get('username', instance.username)
+        instance.bio = validated_data.get('bio', instance.bio)
+        instance.profile_image = validated_data.get('profile_image', instance.profile_image)
+        instance.is_profile_completed = True
+        instance.save()
+        return instance
+
+
+# 다른 앱(ex. chat)에서 사용할 UserSerializer (공용)
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email']
-
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['username', 'account_id', 'bio']
-
-    def validate_username(self, value):
-        if not (2 <= len(value) <= 10):
-            raise serializers.ValidationError("사용자 이름은 2자 이상 10자 이하이어야 합니다.")
-        return value
-
-    def validate_account_id(self, value):
-        if not re.match(r'^[a-zA-Z0-9_]+$', value):
-            raise serializers.ValidationError("영문, 숫자, 밑줄(_)만 사용할 수 있습니다.")
-        if User.objects.exclude(pk=self.instance.pk).filter(account_id=value).exists():
-            raise serializers.ValidationError("이미 사용 중인 ID입니다.")
-        return value
+        fields = ['id', 'email', 'account_id', 'username', 'profile_image']

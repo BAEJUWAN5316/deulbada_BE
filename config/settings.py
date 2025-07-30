@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'rest_framework', # Django REST Framework 추가
     'corsheaders',    # django-cors-headers 추가
     'channels', # Django Channels 추가
+    'drf_yasg', # drf-yasg 추가
 ]
 
 MIDDLEWARE = [

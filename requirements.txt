@@ -11,3 +11,5 @@ pandas
 openpyxl
 
 pytest
+
+djangorestframework-simplejwt

@@ -51,7 +51,8 @@ INSTALLED_APPS = [
     'chat',
     'categories',
     # Third-party apps
-    'rest_framework', # Django REST Framework 추가
+    'rest_framework',
+    'rest_framework_simplejwt', # Django REST Framework 추가
     'corsheaders',    # django-cors-headers 추가
     'channels', # Django Channels 추가
 ]
@@ -87,6 +88,13 @@ TEMPLATES = [
         },
     },
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
 
 WSGI_APPLICATION = 'config.wsgi.application'
 

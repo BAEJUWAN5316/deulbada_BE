@@ -1,20 +1,15 @@
-# users/views.py
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import UserSignupSerializer
+from .serializers import SignupSerializer
 
-class UserSignupView(APIView):
+class SignupView(APIView):
     def post(self, request):
-        serializer = UserSignupSerializer(data=request.data)
+        serializer = SignupSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {
-                    "message": "이메일 등록 완료, 프로필 설정으로 이동하세요.",
-                    "next": "/users/profile/"
-                },
-                status=status.HTTP_201_CREATED
-            )
+            user = serializer.save()
+            return Response({
+                "user_id": user.id,
+                "message": "회원가입 1단계 완료. 프로필 정보를 입력해주세요."
+            }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

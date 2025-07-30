@@ -10,4 +10,4 @@ django-extensions
 pandas
 openpyxl
 
-pytest
+pytestdjango-filter 

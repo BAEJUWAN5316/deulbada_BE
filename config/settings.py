@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'posts',
     'products',
     'chat',
-    'categories'
+    'categories',
     # Third-party apps
     'rest_framework', # Django REST Framework 추가
     'corsheaders',    # django-cors-headers 추가
@@ -90,6 +90,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+AUTH_USER_MODEL = 'users.User'  #  커스텀 유저 모델 설정
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases

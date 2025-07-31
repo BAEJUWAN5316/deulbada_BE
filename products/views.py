@@ -14,9 +14,6 @@ class ProductListCreateView(generics.ListCreateAPIView):
     filterset_class = ProductFilter
 
     def perform_create(self, serializer):
-        if not self.request.user.is_authenticated:
-            raise PermissionDenied("로그인이 필요합니다.")
-
         serializer.save(seller=self.request.user)
 
 class ProductRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):

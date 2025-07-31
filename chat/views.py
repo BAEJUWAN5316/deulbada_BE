@@ -45,7 +45,11 @@ class MessageListCreateView(generics.ListCreateAPIView):
         return Message.objects.filter(room_id=chat_room_id)
 
     def perform_create(self, serializer):
+        if not self.request.user.is_authenticated:
+            raise PermissionDenied("로그인이 필요합니다.")
         # 메시지 생성 시 현재 요청을 보낸 사용자를 발신자로 설정
         chat_room_id = self.kwargs['room_id'] # URL 패턴 변경에 따라 kwargs 키 변경
         chat_room = ChatRoom.objects.get(id=chat_room_id)
         serializer.save(sender=self.request.user, room=chat_room)
+
+        

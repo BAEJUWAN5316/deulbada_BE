@@ -30,14 +30,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-						set -e
-            cd /home/ubuntu/drf_ci-cd
+            cd /home/ubuntu/deulbada_BE
             git pull origin main
-						
-						cd /home/ubuntu/drf_ci-cd/drf_test
-            echo "SECRET_KEY=\"${{ secrets.SECRET_KEY }}\"" > .env
-            echo "DEBUG='${{ secrets.DEBUG }}'" > .env
-
             source venv/bin/activate
             pip install -r requirements.txt
             

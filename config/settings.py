@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'categories',
     # Third-party apps
     'rest_framework', # Django REST Framework 추가
+    'django_filters', # django-filter 추가
     'corsheaders',    # django-cors-headers 추가
     'channels', # Django Channels 추가
     'drf_yasg', # drf-yasg 추가

@@ -19,8 +19,12 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('users', include('users.urls')),
-    path('postss', include('posts.urls')),
-    path('products', include('products.urls')),
-    path('chat', include('chat.urls')),
+
+    # ✅ 슬래시 추가만, prefix 없이
+    #path('users/', include('users.urls')),
+    path('posts/', include('posts.urls')),
+   # path('products/', include('products.urls')),
+    #path('chat/', include('chat.urls')),
 ]
+
+

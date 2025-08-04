@@ -1,42 +1,7 @@
-✦ 알겠습니다. er.txt 파일을 읽어서 어떤 변경사항이 있었는지 확인하고 원래대로
-  되돌리겠습니다.
- ╭─────────────────────╮
- │ ✔  ReadFile er.txt  │
- ╰─────────────────────╯
-✦ er.txt 파일을 확인했습니다. 오류 해결을 위해 products/admin.py와
-  chat/admin.py 파일이 수정된 것을 확인했습니다. 502 오류가 발생한다고       
-  하셨으니, 이 두 파일을 원래대로 되돌리겠습니다.
+http://127.0.0.1:8000/products/
+위의 주소로 접속하면
 
-  먼저 products/admin.py 파일을 되돌리겠습니다.
- ╭─────────────────────────────────────────────────────────────────────╮     
- │ ✔  WriteFile Writing to products\admin.py                           │     
- │                                                                     │     
- │     1   from django.contrib import admin                            │     
- │     2   from .models import Product, ProductCategory                │     
- │     3                                                               │     
- │     4 - @admin.register(Product)                                    │
- │     5 - class ProductAdmin(admin.ModelAdmin):                       │
- │     6 -     list_display = ['id', 'name', 'price', 'stock',         │
- │       'created_at']                                                 │
- │     7 -     list_filter = ['created_at']                            │
- │     8 -     search_fields = ['name', 'seller__username']            │
- │     9 -     ordering = ['-created_at']                              │
- │    10 -                                                             │
- │     4 + admin.site.register(Product)                                │
- │     5   admin.site.register(ProductCategory)                        │
- ╰─────────────────────────────────────────────────────────────────────╯
-✦ products/admin.py 파일을 원래대로 되돌렸습니다. 이제 chat/admin.py 파일을   
-  원래대로 되돌리겠습니다.
- ╭─────────────────────────────────────────────────────────────────────╮
- │ ✔  WriteFile Writing to chat\admin.py                               │
- │                                                                     │
- │    1   from django.contrib import admin                             │
- │    2   from .models import ChatRoom, Message                        │
- │    3                                                                │
- │    4 - # admin.site.register(ChatRoom)                              │
- │    5 - # admin.site.register(Message)                               │
- │    4 + admin.site.register(ChatRoom)                                │
- │    5 + admin.site.register(Message)                                 │
- ╰─────────────────────────────────────────────────────────────────────╯
-✦ chat/admin.py 파일도 원래대로 되돌렸습니다. 이제 502 오류가 해결되었는지   
-  확인해 보시겠어요?
+ProgrammingError at /products/
+오류:  "django_session" 이름의 릴레이션(relation)이 없습니다
+LINE 1: ...ession_data", "django_session"."expire_date" FROM "django_se...
+위의 오류가 발생한다.

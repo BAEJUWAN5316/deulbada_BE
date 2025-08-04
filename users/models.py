@@ -1,40 +1,16 @@
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
-from django.utils import timezone
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 
-class UserManager(BaseUserManager):
-    def create_user(self, email, password=None, **extra_fields):
-        if not email:
-            raise ValueError("이메일은 필수입니다.")
-        email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_superuser(self, email, password=None, **extra_fields):
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-        return self.create_user(email, password, **extra_fields)
-
-
-class User(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(unique=True)
-    password = models.CharField(max_length=128)
-
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-
-    is_profile_completed = models.BooleanField(default=False)  # 프로필 여부 확인용
-
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_image = models.URLField(blank=True, null=True)
+    bio = models.TextField(blank=True)
+    is_farm_owner = models.BooleanField(default=False)
+    is_farm_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
-
-    objects = UserManager()
-
     def __str__(self):
-        return self.email
+        return f"{self.user.account_id}의 프로필"

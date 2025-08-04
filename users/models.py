@@ -1,7 +1,5 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
-from django.utils import timezone
-
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -20,13 +18,24 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    ROLE_CHOICES = (
+        ('consumer', '소비자'),
+        ('producer', '생산자'),
+    )
+
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
 
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='consumer')
+
+    # 생산자 전용 필드
+    representative_name = models.CharField(max_length=100, blank=True, null=True)
+    business_registration_number = models.CharField(max_length=20, blank=True, null=True)
+    business_document = models.FileField(upload_to='business_docs/', blank=True, null=True)
+
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-
-    is_profile_completed = models.BooleanField(default=False)  # 프로필 여부 확인용
+    is_profile_completed = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -37,4 +46,4 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     def __str__(self):
-        return self.email
+        return f"{self.email} ({self.role})"

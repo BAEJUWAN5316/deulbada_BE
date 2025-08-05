@@ -5,5 +5,5 @@ venv
 .venv
 .DS_Store
 media
-er
-gem
+er.txt
+gem.txt

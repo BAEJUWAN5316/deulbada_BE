@@ -1,7 +1,5 @@
-http://127.0.0.1:8000/products/
-위의 주소로 접속하면
+from enum import Enum
 
-ProgrammingError at /products/
-오류:  "django_session" 이름의 릴레이션(relation)이 없습니다
-LINE 1: ...ession_data", "django_session"."expire_date" FROM "django_se...
-위의 오류가 발생한다.
+class UserRole(Enum):
+    USER = "user"
+    ADMIN = "admin"

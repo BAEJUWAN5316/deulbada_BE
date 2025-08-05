@@ -1,8 +1,8 @@
 from django.db import models
 from django.conf import settings
-from core.models.base import Base
+from core.models.base import TimeStampedModel
 
-class ChatRoom(Base):
+class ChatRoom(TimeStampedModel):
     user1 = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='chat_rooms_as_user1')
     user2 = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='chat_rooms_as_user2')
 
@@ -12,7 +12,7 @@ class ChatRoom(Base):
     def __str__(self):
         return f"Chat between {self.user1.username} and {self.user2.username}"
 
-class Message(Base):
+class Message(TimeStampedModel):
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
     content = models.TextField()

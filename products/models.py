@@ -1,8 +1,8 @@
 from django.db import models
 from django.conf import settings
-from core.models.base import Base
+from core.models.base import TimeStampedModel
 
-class Product(Base):
+class Product(TimeStampedModel):
     seller = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='products')
     name = models.CharField(max_length=100)
     description = models.TextField()

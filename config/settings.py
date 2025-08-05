@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     'chat',
     'categories',
     # Third-party apps
-    'rest_framework_simplejwt',
     'rest_framework', # Django REST Framework 추가
     'django_filters', # django-filter 추가
     'rest_framework_simplejwt', # Django REST Framework 추가

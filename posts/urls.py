@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import PostListView, PostWriteView, PostLikeToggleView
+from .views import PostListView, PostWriteView, PostLikeToggleView, CommentCreateView
 
 urlpatterns = [
     # 전체 게시글 조회
@@ -10,4 +10,6 @@ urlpatterns = [
 
     # 게시글 좋아요 / 좋아요 취소
     path('<int:post_id>/like/', PostLikeToggleView.as_view(), name='post-like'),
+
+    path('<int:post_id>/comment/', CommentCreateView.as_view(), name='comment-create'),
 ]

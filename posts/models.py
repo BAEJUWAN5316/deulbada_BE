@@ -21,3 +21,16 @@ class Like(models.Model):
 
     def __str__(self):
         return f"{self.user.username} → Post {self.post.id}"
+
+class Comment(models.Model):
+    post = models.ForeignKey('Post', on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    
+    # 대댓글 (부모 댓글 연결)
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username}의 댓글: {self.content[:20]}"

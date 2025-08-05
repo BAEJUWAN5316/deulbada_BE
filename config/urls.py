@@ -21,8 +21,8 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('', lambda request: HttpResponse("🚀 서버 정상 작동 중입니다!")),
     path('admin/', admin.site.urls),
-   # path('users', include('users.urls')),
-    path('posts/', include('posts.urls')),
-    #path('products', include('products.urls')),
-    #path('chat', include('chat.urls')),
+    path('users/', include('users.urls')),
+    #path('postss/', include('posts.urls')),
+    #path('products/', include('products.urls')),
+   # path('chat/', include('chat.urls')),
 ]

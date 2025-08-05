@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework', # Django REST Framework 추가
     'django_filters', # django-filter 추가
+    'rest_framework_simplejwt', # Django REST Framework 추가
     'corsheaders',    # django-cors-headers 추가
     'channels', # Django Channels 추가
     'drf_yasg', # drf-yasg 추가
@@ -90,9 +91,17 @@ TEMPLATES = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+
 WSGI_APPLICATION = 'config.wsgi.application'
 AUTH_USER_MODEL = 'users.User' 
 
+AUTH_USER_MODEL = 'users.User'  #  커스텀 유저 모델 설정
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases

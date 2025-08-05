@@ -39,13 +39,13 @@ ALLOWED_HOSTS = ['43.201.70.73', 'localhost', '127.0.0.1']
 # Application definition
 
 INSTALLED_APPS = [
+    'users',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'users',
     'posts',
     'products',
     'chat',
@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework', # Django REST Framework 추가
     'django_filters', # django-filter 추가
+    'rest_framework_simplejwt', # Django REST Framework 추가
     'corsheaders',    # django-cors-headers 추가
     'channels', # Django Channels 추가
     'drf_yasg', # drf-yasg 추가
@@ -91,6 +92,13 @@ TEMPLATES = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
@@ -115,6 +123,7 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+AUTH_USER_MODEL = 'users.User'
 
 
 # Password validation

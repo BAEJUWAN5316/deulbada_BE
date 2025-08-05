@@ -1,22 +1,26 @@
 from rest_framework import serializers
-from .models import UserProfile, User
+from .models import Follow, User
 
-# ✅ 팔로워/팔로잉 목록 조회용 (당신이 만든 것)
-class SimpleUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['account_id', 'username']
-
-# ✅ 프로필 정보용 시리얼라이저
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserProfile
-        fields = ['profile_image', 'bio', 'is_farm_owner', 'is_farm_verified']
-
-# ✅ 전체 프로필 조회/수정 시 사용
-class MyProfileSerializer(serializers.ModelSerializer):
-    profile = UserProfileSerializer(source='userprofile')
+class FollowSerializer(serializers.ModelSerializer):
+    follower = serializers.ReadOnlyField(source='follower.account_id')
+    following = serializers.SlugRelatedField(
+        queryset=User.objects.all(),
+        slug_field='account_id'
+    )
 
     class Meta:
-        model = User
-        fields = ['account_id', 'username', 'email', 'profile']
+        model = Follow
+        fields = ['id', 'follower', 'following', 'created_at']
+        read_only_fields = ['id', 'follower', 'created_at']
+
+    def validate(self, data):
+        follower = self.context['request'].user
+        following = data['following']
+
+        if follower == following:
+            raise serializers.ValidationError("자기 자신을 팔로우할 수 없습니다.")
+
+        if Follow.objects.filter(follower=follower, following=following).exists():
+            raise serializers.ValidationError("이미 팔로우 중입니다.")
+
+        return data

@@ -1,54 +1,50 @@
-from rest_framework.views import APIView
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import NotFound
 from .models import Follow, User
-from .serializers import MyProfileSerializer
-from rest_framework.generics import ListAPIView
-from .serializers import SimpleUserSerializer
+from .serializers import FollowSerializer
 
-# 🔹 프로필 조회 뷰 (필수)
-class MyProfileView(APIView):
-    permission_classes = [IsAuthenticated]
+# 팔로우 생성
+class FollowCreateAPIView(generics.CreateAPIView):
+    queryset = Follow.objects.all()
+    serializer_class = FollowSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request):
-        serializer = MyProfileSerializer(request.user)
-        return Response(serializer.data)
+    def perform_create(self, serializer):
+        serializer.save(follower=self.request.user)
 
-# 🔹 팔로우 토글 뷰
-class FollowToggleView(APIView):
-    permission_classes = [IsAuthenticated]
+# 언팔로우 기능
+class UnfollowAPIView(generics.DestroyAPIView):
+    serializer_class = FollowSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, account_id):
+    def get_object(self):
+        follower = self.request.user
+        following_account_id = self.kwargs['account_id']
         try:
-            target_user = User.objects.get(account_id=account_id)
-        except User.DoesNotExist:
-            return Response({"error": "유저를 찾을 수 없습니다."}, status=404)
+            return Follow.objects.get(follower=follower, following__account_id=following_account_id)
+        except Follow.DoesNotExist:
+            raise NotFound("팔로우하지 않은 유저입니다.")
 
-        if target_user == request.user:
-            return Response({"error": "자기 자신을 팔로우할 수 없습니다."}, status=400)
+    def delete(self, request, *args, **kwargs):
+        follow = self.get_object()
+        follow.delete()
+        return Response({'detail': '언팔로우 완료'}, status=status.HTTP_204_NO_CONTENT)
 
-        follow, created = Follow.objects.get_or_create(follower=request.user, following=target_user)
-
-        if created:
-            return Response({"message": "팔로우 완료"}, status=201)
-        else:
-            follow.delete()
-            return Response({"message": "언팔로우 완료"}, status=200)
-
-# 🔹 팔로워 목록
-class FollowerListView(ListAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = SimpleUserSerializer
+# 팔로워 목록 조회
+class FollowerListAPIView(generics.ListAPIView):
+    serializer_class = FollowSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = User.objects.get(account_id=self.kwargs['account_id'])
-        return [follow.follower for follow in user.follower_set.all()]
+        account_id = self.kwargs['account_id']
+        return Follow.objects.filter(following__account_id=account_id)
 
-# 🔹 팔로잉 목록
-class FollowingListView(ListAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = SimpleUserSerializer
+# 팔로잉 목록 조회
+class FollowingListAPIView(generics.ListAPIView):
+    serializer_class = FollowSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = User.objects.get(account_id=self.kwargs['account_id'])
-        return [follow.following for follow in user.following_set.all()]
+        account_id = self.kwargs['account_id']
+        return Follow.objects.filter(follower__account_id=account_id)

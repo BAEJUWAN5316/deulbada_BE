@@ -1,3 +1,30 @@
-python manage.py makemigrations를 하면 아래와 같은 오류가 나옴
+http://127.0.0.1:8000/categories/
+url 접속 시 아래와 같은 오류 발생
 
-django.db.migrations.exceptions.InconsistentMigrationHistory: Migration admin.0001_initial is applied before its dependency users.0001_initial on database 'default'. 
+
+ProgrammingError at /categories/
+오류:  categories_category.type 칼럼 없음
+LINE 1: ...gory"."updated_at", "categories_category"."name", "categorie...
+                                                             ^
+Request Method:	GET
+Request URL:	http://127.0.0.1:8000/categories/
+Django Version:	5.2.4
+Exception Type:	ProgrammingError
+Exception Value:	
+오류:  categories_category.type 칼럼 없음
+LINE 1: ...gory"."updated_at", "categories_category"."name", "categorie...
+                                                             ^
+Exception Location:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\db\backends\utils.py, line 105, in _execute
+Raised during:	categories.views.CategoryListCreateView
+Python Executable:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Scripts\python.exe
+Python Version:	3.13.3
+Python Path:	
+['C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final project',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\python313.zip',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\DLLs',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\Lib',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313',
+ 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final project\\venv',
+ 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final '
+ 'project\\venv\\Lib\\site-packages']
+Server time:	Tue, 05 Aug 2025 08:51:46 +0000

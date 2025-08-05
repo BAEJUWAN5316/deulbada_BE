@@ -1,0 +1,65 @@
+에러1 : 아래 url 접속시 아래 오류 발생
+http://127.0.0.1:8000/admin/chat/chatroom/
+
+ProgrammingError at /admin/chat/chatroom/
+오류:  chat_chatroom.updated_at 칼럼 없음
+LINE 1: ...hat_chatroom"."id", "chat_chatroom"."created_at", "chat_chat...
+                                                             ^
+HINT:  아마 "chat_chatroom.created_at" 칼럼을 참조하는 것 같습니다.
+Request Method:	GET
+Request URL:	http://127.0.0.1:8000/admin/chat/chatroom/
+Django Version:	5.2.4
+Exception Type:	ProgrammingError
+Exception Value:	
+오류:  chat_chatroom.updated_at 칼럼 없음
+LINE 1: ...hat_chatroom"."id", "chat_chatroom"."created_at", "chat_chat...
+                                                             ^
+HINT:  아마 "chat_chatroom.created_at" 칼럼을 참조하는 것 같습니다.
+Exception Location:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\db\backends\utils.py, line 105, in _execute
+Raised during:	django.contrib.admin.options.changelist_view
+Python Executable:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Scripts\python.exe
+Python Version:	3.13.3
+Python Path:	
+['C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final project',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\python313.zip',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\DLLs',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\Lib',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313',
+ 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final project\\venv',
+ 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final '
+ 'project\\venv\\Lib\\site-packages']
+Server time:	Tue, 05 Aug 2025 09:25:54 +0000
+
+에러2 : 아래 url 접속시 아래 오류 발생
+http://127.0.0.1:8000/admin/chat/message/
+
+ProgrammingError at /admin/chat/message/
+오류:  chat_message.updated_at 칼럼 없음
+LINE 1: ..."chat_message"."id", "chat_message"."created_at", "chat_mess...
+                                                             ^
+HINT:  아마 "chat_message.created_at" 칼럼을 참조하는 것 같습니다.
+Request Method:	GET
+Request URL:	http://127.0.0.1:8000/admin/chat/message/
+Django Version:	5.2.4
+Exception Type:	ProgrammingError
+Exception Value:	
+오류:  chat_message.updated_at 칼럼 없음
+LINE 1: ..."chat_message"."id", "chat_message"."created_at", "chat_mess...
+                                                             ^
+HINT:  아마 "chat_message.created_at" 칼럼을 참조하는 것 같습니다.
+Exception Location:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\db\backends\utils.py, line 105, in _execute
+Raised during:	django.contrib.admin.options.changelist_view
+Python Executable:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Scripts\python.exe
+Python Version:	3.13.3
+Python Path:	
+['C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final project',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\python313.zip',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\DLLs',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\Lib',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313',
+ 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final project\\venv',
+ 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final '
+ 'project\\venv\\Lib\\site-packages']
+Server time:	Tue, 05 Aug 2025 09:26:26 +0000
+
+에러3: psql -h localhost -p 5432 -U deulbada_user -d deulbada

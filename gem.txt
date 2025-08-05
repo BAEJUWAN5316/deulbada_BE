@@ -1,0 +1,454 @@
+# ERD
+
+백엔드 DB 설계 (추가)
+
+## User (회원)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | 사용자 고유 ID |
+| account_id | CharField(unique=True) | 로그인 ID |
+| username | CharField(unique=True) | 닉네임 |
+| email | EmailField(unique=True) | 이메일 |
+| password | CharField | 암호화된 비밀번호 |
+| profile_image | URLField | 프로필 사진 |
+| bio | TextField | 자기소개 |
+| is_farm_owner | BooleanField | 직영 농장주 여부 |
+| is_farm_verified | BooleanField | 농장주 인증 여부 |
+| is_active | BooleanField | 탈퇴/정지 여부 |
+| is_staff | BooleanField | 관리자 권한 |
+| last_login | DateTimeField | 마지막 로그인 |
+| date_joined | DateTimeField | 가입일자 |
+| created_at | DateTimeField | 생성일시 |
+| updated_at | DateTimeField | 수정일시 |
+
+> 
+> 
+
+---
+
+## Auth (인증)
+
+| 필드명 | 설명 |
+| --- | --- |
+| access_token | JWT Access Token (응답 전용) |
+| account_id | 로그인 ID (`User.account_id`) |
+| username | 닉네임 (`User.username`) |
+
+---
+
+## Profile 설정 / 조회
+
+| 항목 | 필드명 | 모델 | 설명 |
+| --- | --- | --- | --- |
+| 사용자 이름 | username | User.username | 닉네임 |
+| 계정 ID | account_id | User.account_id | 로그인 ID |
+| 소개 내용 | bio | User.bio | 자기소개 |
+| 프로필 이미지 | profile_image | User.profile_image | 프로필 사진 |
+| 직영농장주 여부 | is_farm_owner | User.is_farm_owner | Boolean |
+
+---
+
+## 계정 검색
+
+| 항목 | 필드명 | 설명 |
+| --- | --- | --- |
+| 계정 ID | account_id | 아이디 기준 검색 |
+| 이름 | username | 닉네임 기준 검색 |
+| 프로필 이미지 | profile_image | 이미지 URL 반환 |
+
+---
+
+## Follow (팔로우)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | 팔로우 ID |
+| follower_id | FK → User.id | 나 (팔로우하는 사람) |
+| following_id | FK → User.id | 상대방 |
+| created_at | DateTimeField | 팔로우한 시점 |
+
+---
+
+## 상대 프로필 페이지
+
+| 항목 | 필드명 | 설명 |
+| --- | --- | --- |
+| 계정 ID | account_id | User.account_id |
+| 이름 | username | User.username |
+| 소개 | bio | User.bio |
+| 프로필 이미지 | profile_image | User.profile_image |
+| 팔로워 수 | follower_count | Follow 기준 |
+| 팔로잉 수 | following_count | Follow 기준 |
+| 팔로잉 여부 | is_following | 로그인 유저 기준 |
+| 직영농장주 여부 | is_farm_owner | User.is_farm_owner |
+
+---
+
+## Product (판매 상품)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | 상품 고유 ID |
+| seller_id | FK → User.id | 판매자 |
+| name | CharField | 상품명 |
+| description | TextField | 설명 |
+| price | IntegerField | 가격 |
+| stock | IntegerField | 재고 수량 |
+| image_urls | JSONField 또는 별도 테이블 | 이미지 리스트 (최대 5장) |
+| variety | CharField | 품종 |
+| region | CharField | 재배 지역 |
+| harvest_date | DateField | 수확 시기 |
+| category | CharField | 1차 카테고리 |
+| sub_category | CharField | 2차 카테고리 |
+| product_url | URLField | 상품 링크 |
+| created_at | DateTimeField | 등록일시 |
+
+---
+
+## Post (게시글)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | 게시글 ID |
+| author_id | FK → User.id | 작성자 |
+| content | TextField | 텍스트 |
+| image_urls | JSONField 또는 별도 테이블 | 이미지 리스트 (최대 10장) |
+| created_at | DateTimeField | 작성일시 |
+
+---
+
+### 게시글 요약 조회용
+
+| 항목 | 필드명 | 설명 |
+| --- | --- | --- |
+| 계정 ID | account_id | 작성자 ID |
+| 이름 | username | 작성자 닉네임 |
+| 프로필 이미지 | profile_image | 작성자 이미지 |
+| 게시글 내용 | post_content | content + image_urls |
+| 좋아요 수 | like_count | Like 기준 |
+| 댓글 수 | comment_count | Comment 기준 |
+| 업로드 날짜 | upload_date | created_at 기준 |
+
+---
+
+## Comment (댓글)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | 댓글 ID |
+| post_id | FK → Post.id | 게시글 |
+| author_id | FK → User.id | 댓글 작성자 |
+| content | TextField | 내용 |
+| created_at | DateTimeField | 작성일시 |
+
+---
+
+## Like (좋아요)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | 좋아요 ID |
+| user_id | FK → User.id | 누른 유저 |
+| post_id | FK → Post.id | 게시글 |
+| created_at | DateTimeField | 좋아요한 시점 |
+
+---
+
+## ChatRoom (채팅방)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | 채팅방 ID |
+| user1_id | FK → User.id | 참여자 1 |
+| user2_id | FK → User.id | 참여자 2 |
+| created_at | DateTimeField | 생성일시 |
+
+---
+
+## Message (메시지)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | 메시지 ID |
+| room_id | FK → ChatRoom.id | 소속 채팅방 |
+| sender_id | FK → User.id | 보낸 사람 |
+| content | TextField | 텍스트 내용 |
+| image_url | URLField (nullable) | 이미지 메시지 |
+| is_read | BooleanField | 읽음 여부 |
+| created_at | DateTimeField | 전송 시간 |
+
+---
+
+### 채팅 리스트 화면용
+
+| 항목 | 필드명 | 설명 |
+| --- | --- | --- |
+| 읽음 여부 | is_read | 마지막 메시지 기준 |
+| 계정 ID | account_id | 상대 유저 |
+| 이름 | username | 상대 이름 |
+| 프로필 이미지 | profile_image | 상대 유저 |
+| 마지막 메시지 | last_message | 최근 메시지 내용 |
+| 채팅 시각 | timestamp | 최근 메시지 시간 |
+
+---
+
+## Report (신고)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | 신고 ID |
+| reporter_id | FK → User.id | 신고자 |
+| target_user_id | FK → User.id | 신고 대상 |
+| reason | TextField | 신고 사유 |
+| created_at | DateTimeField | 신고 시점 |
+
+---
+
+## FarmVerification (농장주 인증)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | 요청 ID |
+| user_id | FK → User.id | 요청자 |
+| farm_name | CharField | 농장 이름 |
+| document | FileField | 인증 자료 |
+| status | EnumField (`pending`, `approved`, `rejected`) | 인증 상태 |
+| created_at | DateTimeField | 신청 시각 |
+| reviewed_at | DateTimeField (nullable) | 운영자 승인/거절 시각 |
+
+---
+
+## Category (카테고리)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | 카테고리 ID |
+| name | CharField | 카테고리 이름 |
+| type | EnumField (`product`, `post`, `both`) | 사용 용도 |
+| icon_image | URLField | 아이콘 이미지 |
+| parent_id | FK → Category.id (nullable) | 상위 카테고리 |
+| created_at | DateTimeField | 생성일시 |
+
+---
+
+## ProductCategory (상품-카테고리 연결)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | ID |
+| product_id | FK → Product.id | 상품 ID |
+| category_id | FK → Category.id | 카테고리 |
+
+---
+
+## PostCategory (게시글-카테고리 연결)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | ID |
+| post_id | FK → Post.id | 게시글 ID |
+| category_id | FK → Category.id | 카테고 |
+
+---
+
+## Hashtag (해시태그)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | 해시태그 ID |
+| name | string | 해시태그 이름 (중복 불가, 소문자 처리 권장) |
+| created_at | datetime | 생성일시 |
+| updated_at | datetime | 수정일시 |
+
+---
+
+## PostHashtag (게시글-해시태그 연결)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | ID |
+| post_id | FK → Post.id | 게시글 ID |
+| hashtag_id | FK → Hashtag.id | 연결된 해시태그 |
+
+---
+
+## ProductHashtag (상품-해시태그 연결)
+
+| 필드명 | 타입 | 설명 |
+| --- | --- | --- |
+| id | PK | ID |
+| product_id | FK → Product.id | 상품 ID |
+| hashtag_id | FK → Hashtag.id | 연결된 해시태그 |
+
+
+## **배주완 담당자**
+
+| 기능명 | 개발 예정일 | 우선순위 |
+| --- | --- | --- |
+| `Product` 모델 설계 | Day 1 | 필수 |
+| 상품 등록 / 수정 / 삭제 API | Day 2 | 필수 |
+| 채팅 모델 (ChatRoom / Message) 생성 | Day 3 | 핵심 |
+| 채팅방 목록 조회 API | Day 4 | 핵심 |
+| 알림 모델 설계 | Day 5 | 보완 |
+| 이미지 검증 로직 구현 | Day 6 | 보완 |
+| 메시지 전송 API | Day 7 | 핵심 |
+| 알림 기능 API 구현 | Day 8 | 보완 |
+| 채팅 기능 고도화 | Day 8 | 핵심 |
+
+
+# 카테고리 연결 방식
+
+## 
+
+```
+text
+복사편집
+[ Category ]   ← 1차, 2차 카테고리 정보 들어있는 테이블
+     ↑
+[ ProductCategory ]  ← 중간 테이블 (ManyToMany 연결)
+     ↑
+[ Product ]     ← 실제 상품 정보 (이름, 가격, 원산지 등)
+
+```
+
+- **Category**: "농산물", "수산물", "뿌리채소류" 이런 카테고리들 저장
+- **ProductCategory**: 특정 상품이 어떤 카테고리에 속해 있는지 연결
+- **Product**: 진짜 상품 데이터
+
+---
+
+## 📦 예시 데이터
+
+| Category ID | name | parent_id |
+| --- | --- | --- |
+| 1 | 농산물 | NULL      ← 1차 |
+| 2 | 뿌리채소류 | 1         ← 2차 (1의 하위) |
+| 3 | 수산물 | NULL |
+| 4 | 어패류 | 3 |
+
+| Product ID | name | region | price |
+| --- | --- | --- | --- |
+| 1 | 당근 | 서귀포 | 5000 |
+| 2 | 조개 | 부산 | 2000 |
+
+| ProductCategory | product_id | category_id |
+| --- | --- | --- |
+|  | 1 | 2           ← 당근은 뿌리채소류 |
+|  | 2 | 4           ← 조개는 어패류 |
+
+---
+
+## 🌐 사용자가 어떤 행동을 했을 때?
+
+### ❓ 사용자가 "뿌리채소류" 버튼을 클릭했다!
+
+그럼 프론트는 이렇게 요청해:
+
+```
+bash
+복사편집
+GET /api/products/?category=2
+
+```
+
+---
+
+## 🧠 백엔드는 이렇게 처리해!
+
+1. `category=2`라는 필터 값을 받음
+2. `ProductCategory` 테이블에서 `category_id=2`인 상품을 찾음
+3. 그 상품 ID로 `Product`를 조회해서 결과를 응답함
+
+---
+
+## 🎯 응답 결과 예시 (DRF 응답)
+
+```json
+json
+복사편집
+[
+  {
+    "id": 1,
+    "name": "당근",
+    "region": "서귀포",
+    "price": 5000,
+    "categories": ["농산물", "뿌리채소류"]
+  }
+]
+
+```
+
+---
+
+## 🗺 전체 흐름 요약 그림으로 보면:
+
+```
+text
+복사편집
+사용자 클릭: "뿌리채소류"
+     ↓
+GET /api/products/?category=2
+     ↓
+ProductCategory → product_id = 1 찾음
+     ↓
+Product ID 1 ("당근") 불러오기
+     ↓
+프론트에 당근 정보 응답
+
+```
+
+---
+
+## 💬 실제 코드 흐름 (진짜 간단하게)
+
+### 🔍 ProductFilter
+
+```python
+python
+복사편집
+class ProductFilter(filters.FilterSet):
+    category = filters.NumberFilter(method='filter_by_category')
+
+    def filter_by_category(self, queryset, name, value):
+        return queryset.filter(productcategory__category_id=value)
+
+```
+
+### 🧩 ViewSet
+
+```python
+python
+복사편집
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ProductFilter
+
+```
+
+---
+
+## 🧠 이해 팁
+
+| 용어 | 쉽게 말하면 |
+| --- | --- |
+| `parent_id` | "누구 밑에 속해 있는지" |
+| `category=2` | "이 카테고리에 속한 애들만 줘!" |
+| `ManyToMany` | "하나의 상품이 여러 카테고리에 속할 수 있다" |
+| `중간 테이블` | 둘 사이 연결 담당하는 다리 역할 |
+
+---
+
+## 🔚 요약하면?
+
+> 사용자: "뿌리채소류 상품만 보여줘!"
+> 
+> 
+> 프론트: `GET /api/products/?category=2`
+> 
+> 백엔드: ProductCategory → Product → 응답
+> 
+> 프론트: 해당 상품들 화면에 뿌림
+>

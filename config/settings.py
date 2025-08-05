@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'corsheaders',    # django-cors-headers 추가
     'channels', # Django Channels 추가
     'drf_yasg', # drf-yasg 추가
+    'mptt', # django-mptt 추가
 ]
 
 MIDDLEWARE = [

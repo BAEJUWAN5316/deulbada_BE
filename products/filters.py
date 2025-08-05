@@ -1,5 +1,6 @@
 import django_filters
-from .models import Product, ProductCategory
+from .models import Product
+from categories.models import Category
 
 class ProductFilter(django_filters.FilterSet):
     category = django_filters.NumberFilter(method='filter_by_category')
@@ -9,5 +10,11 @@ class ProductFilter(django_filters.FilterSet):
         fields = ['category']
 
     def filter_by_category(self, queryset, name, value):
-        # ProductCategory를 통해 특정 category_id를 가진 Product를 필터링합니다.
-        return queryset.filter(product_categories__category_id=value).distinct()
+        try:
+            # 선택된 카테고리 및 모든 하위 카테고리를 가져옴
+            category = Category.objects.get(id=value)
+            sub_categories = category.get_descendants(include_self=True)
+            category_ids = [cat.id for cat in sub_categories]
+            return queryset.filter(product_categories__category_id__in=category_ids).distinct()
+        except Category.DoesNotExist:
+            return queryset.none()

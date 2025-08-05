@@ -26,3 +26,5 @@ urlpatterns = [
     #path('products/', include('products.urls')),
    # path('chat/', include('chat.urls')),
 ]
+
+

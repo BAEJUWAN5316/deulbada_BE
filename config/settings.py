@@ -39,13 +39,13 @@ ALLOWED_HOSTS = ['43.201.70.73', 'localhost', '127.0.0.1']
 # Application definition
 
 INSTALLED_APPS = [
+    'users',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'users',
     'posts',
     'products',
     'chat',
@@ -99,15 +99,8 @@ REST_FRAMEWORK = {
 
 
 WSGI_APPLICATION = 'config.wsgi.application'
-AUTH_USER_MODEL = 'users.User' 
 
-AUTH_USER_MODEL = 'users.User'  #  커스텀 유저 모델 설정
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-}
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
@@ -161,8 +154,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
-AUTH_USER_MODEL = 'users.User'
 
 
 # Static files (CSS, JavaScript, Images)

@@ -22,9 +22,12 @@ urlpatterns = [
     path('', lambda request: HttpResponse("🚀 서버 정상 작동 중입니다!")),
     path('admin/', admin.site.urls),
     path('users/', include('users.urls')),
-    #path('postss/', include('posts.urls')),
-    #path('products/', include('products.urls')),
-   # path('chat/', include('chat.urls')),
+    path('posts/', include('posts.urls')),
+    path('products/', include('products.urls')),
+    path('chat/', include('chat.urls')),
+    path('categories/', include('categories.urls')),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
 
 

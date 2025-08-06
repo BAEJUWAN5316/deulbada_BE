@@ -1,20 +1,29 @@
+"""
+Django 커스텀 커맨드: load_dummy_data.py
+- er2.txt 파일을 파싱해 더미 데이터를 안전하게 DB에 삽입함
+- 각 모델별로 중복 생성 방지, 예외 처리, FK 안전성 확보
+- 평문 비밀번호는 create_user를 통해 해싱하여 저장
+- 모든 FK는 사전에 생성된 객체 딕셔너리를 참조
+- 각 섹션 별로 실패 로그 출력 및 실행 지속
+"""
+
 import os
 import re
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.utils import timezone
-from users.models import User, UserProfile
+from users.models import User, UserProfile, Follow
 from categories.models import Category
 from products.models import Product, ProductCategory
 from posts.models import Post, Like, Comment
 from chat.models import ChatRoom, Message
+from django.db import transaction
 
 class Command(BaseCommand):
     help = 'Loads dummy data from er2.txt into the database.'
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS('Starting to load dummy data...'))
-
+        self.stdout.write(self.style.SUCCESS('[시작] 더미 데이터 로딩'))
         file_path = os.path.join(settings.BASE_DIR, 'er2.txt')
 
         if not os.path.exists(file_path):
@@ -23,588 +32,436 @@ class Command(BaseCommand):
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
 
-        # Store created objects for FK references
-        created_users = {}
-        created_categories = {}
-        created_products = {}
-        created_posts = {}
-        created_chatrooms = {}
-        created_comments = {} # For parent comment reference
+        # FK 참조용 딕셔너리
+        users = {}
+        profiles = {}
+        follows = {}
+        categories = {}
+        products = {}
+        product_categories = {}
+        posts = {}
+        comments = {}
+        chatrooms = {}
+        messages = {}
 
-        # --- User Model Data ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Loading User Data...'))
-        user_data_match = re.search(r'--- Dummy Data for User Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
-        if user_data_match:
-            user_section = user_data_match.group(1).strip()
-            user_entries = re.findall(r'User (\d+):\n(.*?)(?=(?:User \d+:)|$)', user_section, re.DOTALL)
-            for user_id_str, data_str in user_entries:
-                data = {}
-                for line in data_str.strip().split('\n'):
-                    if ':' in line:
-                        key, value = line.split(':', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        if value == 'True':
-                            data[key] = True
-                        elif value == 'False':
-                            data[key] = False
-                        elif value == 'None':
-                            data[key] = None
-                        elif key in ['date_joined']:
-                            data[key] = timezone.datetime.fromisoformat(value.replace('Z', '+00:00'))
-                        else:
-                            data[key] = value.strip("'"") # Remove quotes if present
-
+        def parse_value(key, val):
+            val = val.strip("'\"")
+            if val == 'True': return True
+            if val == 'False': return False
+            if val == 'None': return None
+            if key in ['created_at', 'updated_at', 'date_joined']:
                 try:
-                    user, created = User.objects.get_or_create(
-                        account_id=data['account_id'],
-                        defaults={
-                            'username': data['username'],
-                            'email': data['email'],
-                            'password': data['password'], # In a real app, hash this!
-                            'is_active': data['is_active'],
-                            'is_staff': data['is_staff'],
-                            'date_joined': data['date_joined'],
-                        }
-                    )
-                    created_users[f'User {user_id_str}'] = user
-                    if created:
-                        self.stdout.write(self.style.SUCCESS(f'Created User: {user.username}'))
-                    else:
-                        self.stdout.write(self.style.WARNING(f'User already exists: {user.username}'))
-                except Exception as e:
-                    self.stdout.write(self.style.ERROR(f'Error creating User {user_id_str}: {e}'))
+                    return timezone.datetime.fromisoformat(val.replace('Z', '+00:00'))
+                except Exception:
+                    self.stdout.write(self.style.ERROR(f'\t⚠️ 날짜 파싱 실패: {val}'))
+                    return timezone.now()
+            if key in ['price', 'stock']:
+                return int(val) if val.isdigit() else 0
+            if val.startswith('[') and val.endswith(']'):
+                return [v.strip(" \"'") for v in val[1:-1].split(',') if v.strip()]
+            return val
 
-        # --- UserProfile Model Data ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Loading UserProfile Data...'))
-        userprofile_data_match = re.search(r'--- Dummy Data for UserProfile Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
-        if userprofile_data_match:
-            userprofile_section = userprofile_data_match.group(1).strip()
-            userprofile_entries = re.findall(r'UserProfile (\d+):\n(.*?)(?=(?:UserProfile \d+:)|$)', userprofile_section, re.DOTALL)
-            for profile_id_str, data_str in userprofile_entries:
-                data = {}
-                for line in data_str.strip().split('\n'):
+        def get_fk(ref, storage, label):
+            if ref and ref.startswith('<FK_REFERENCE: '):
+                key = ref.replace('<FK_REFERENCE: ', '').replace('>', '')
+                obj = storage.get(key)
+                if not obj:
+                    self.stdout.write(self.style.WARNING(f'\t⚠️ {label} FK not found: {key}'))
+                return obj
+            return None
+
+        # --- User Model 처리 ---
+        self.stdout.write(self.style.MIGRATE_HEADING('User'))
+        match = re.search(r'--- Dummy Data for User Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
+        if match:
+            entries = re.findall(r'User (\d+):\n(.*?)(?=(?:User \d+:)|$)', match.group(1), re.DOTALL)
+            for user_id, block in entries:
+                fields = {}
+                for line in block.strip().split('\n'):
                     if ':' in line:
-                        key, value = line.split(':', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        if value == 'True':
-                            data[key] = True
-                        elif value == 'False':
-                            data[key] = False
-                        elif value == 'None':
-                            data[key] = None
-                        elif key in ['created_at', 'updated_at']:
-                            data[key] = timezone.datetime.fromisoformat(value.replace('Z', '+00:00'))
-                        else:
-                            data[key] = value.strip("'"")
-
-                user_ref = data.get('user')
-                if user_ref and user_ref.startswith('<FK_REFERENCE: '):
-                    user_key = user_ref.replace('<FK_REFERENCE: ', '').replace('>', '')
-                    user_obj = created_users.get(user_key)
-                    if user_obj:
-                        try:
-                            user_profile, created = UserProfile.objects.get_or_create(
-                                user=user_obj,
-                                defaults={
-                                    'profile_image': data.get('profile_image'),
-                                    'bio': data.get('bio'),
-                                    'is_farm_owner': data.get('is_farm_owner'),
-                                    'is_farm_verified': data.get('is_farm_verified'),
-                                    'created_at': data.get('created_at'),
-                                    'updated_at': data.get('updated_at'),
-                                }
+                        k, v = line.split(':', 1)
+                        fields[k.strip()] = parse_value(k.strip(), v.strip())
+                
+                try:
+                    with transaction.atomic():
+                        if not User.objects.filter(account_id=fields['account_id']).exists():
+                            user = User.objects.create_user(
+                                account_id=fields['account_id'],
+                                username=fields['username'],
+                                email=fields['email'],
+                                password=fields['password'],
                             )
-                            if created:
-                                self.stdout.write(self.style.SUCCESS(f'Created UserProfile for {user_obj.username}'))
-                            else:
-                                self.stdout.write(self.style.WARNING(f'UserProfile already exists for {user_obj.username}'))
-                        except Exception as e:
-                            self.stdout.write(self.style.ERROR(f'Error creating UserProfile {profile_id_str} for {user_obj.username}: {e}'))
-                    else:
-                        self.stdout.write(self.style.ERROR(f'User reference not found for UserProfile {profile_id_str}: {user_key}'))
-                else:
-                    self.stdout.write(self.style.ERROR(f'Invalid user reference for UserProfile {profile_id_str}: {user_ref}'))
-
-        # --- Follow Model Data ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Loading Follow Data...'))
-        follow_data_match = re.search(r'--- Dummy Data for Follow Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
-        if follow_data_match:
-            follow_section = follow_data_match.group(1).strip()
-            follow_entries = re.findall(r'Follow (\d+):\n(.*?)(?=(?:Follow \d+:)|$)', follow_section, re.DOTALL)
-            for follow_id_str, data_str in follow_entries:
-                data = {}
-                for line in data_str.strip().split('\n'):
-                    if ':' in line:
-                        key, value = line.split(':', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        if value == 'None':
-                            data[key] = None
-                        elif key in ['created_at']:
-                            data[key] = timezone.datetime.fromisoformat(value.replace('Z', '+00:00'))
+                            user.is_active = fields.get('is_active', True)
+                            user.is_staff = fields.get('is_staff', False)
+                            user.date_joined = fields.get('date_joined', timezone.now())
+                            user.save()
+                            self.stdout.write(self.style.SUCCESS(f'\t✅ Created User: {user.username}'))
                         else:
-                            data[key] = value.strip("'"")
-
-                follower_ref = data.get('follower')
-                following_ref = data.get('following')
-
-                follower_obj = None
-                if follower_ref and follower_ref.startswith('<FK_REFERENCE: '):
-                    follower_key = follower_ref.replace('<FK_REFERENCE: ', '').replace('>', '')
-                    follower_obj = created_users.get(follower_key)
-                
-                following_obj = None
-                if following_ref and following_ref.startswith('<FK_REFERENCE: '):
-                    following_key = following_ref.replace('<FK_REFERENCE: ', '').replace('>', '')
-                    following_obj = created_users.get(following_key)
-
-                if follower_obj and following_obj:
-                    try:
-                        # Assuming Follow model is in users.models or a related app
-                        # You might need to import it: from users.models import Follow
-                        # For now, I'll assume it's in users.models for demonstration
-                        from users.models import Follow # Import here for now, move to top later
-                        follow, created = Follow.objects.get_or_create(
-                            follower=follower_obj,
-                            following=following_obj,
-                            defaults={
-                                'created_at': data.get('created_at'),
-                            }
-                        )
-                        if created:
-                            self.stdout.write(self.style.SUCCESS(f'Created Follow: {follower_obj.username} -> {following_obj.username}'))
-                        else:
-                            self.stdout.write(self.style.WARNING(f'Follow already exists: {follower_obj.username} -> {following_obj.username}'))
-                    except Exception as e:
-                        self.stdout.write(self.style.ERROR(f'Error creating Follow {follow_id_str}: {e}'))
-                else:
-                    self.stdout.write(self.style.ERROR(f'Missing follower or following reference for Follow {follow_id_str}'))
-
-        # --- Category Model Data ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Loading Category Data...'))
-        category_data_match = re.search(r'--- Dummy Data for Category Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
-        if category_data_match:
-            category_section = category_data_match.group(1).strip()
-            category_entries = re.findall(r'Category (\d+):\n(.*?)(?=(?:Category \d+:)|$)', category_section, re.DOTALL)
-            for category_id_str, data_str in category_entries:
-                data = {}
-                for line in data_str.strip().split('\n'):
-                    if ':' in line:
-                        key, value = line.split(':', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        if value == 'None':
-                            data[key] = None
-                        elif key in ['created_at', 'updated_at']:
-                            data[key] = timezone.datetime.fromisoformat(value.replace('Z', '+00:00'))
-                        else:
-                            data[key] = value.strip("'"")
-
-                parent_ref = data.get('parent')
-                parent_obj = None
-                if parent_ref and parent_ref.startswith('<FK_REFERENCE: '):
-                    parent_key_match = re.search(r'<FK_REFERENCE: (Category \d+)', parent_ref)
-                    if parent_key_match:
-                        parent_key = parent_key_match.group(1)
-                        parent_obj = created_categories.get(parent_key)
-                    else:
-                        self.stdout.write(self.style.WARNING(f'Could not parse parent FK_REFERENCE for Category {category_id_str}: {parent_ref}'))
-
-                try:
-                    category, created = Category.objects.get_or_create(
-                        name=data['name'],
-                        defaults={
-                            'type': data.get('type'),
-                            'icon_image': data.get('icon_image'),
-                            'parent': parent_obj,
-                            'created_at': data.get('created_at'),
-                            'updated_at': data.get('updated_at'),
-                        }
-                    )
-                    created_categories[f'Category {category_id_str} ({data["name"]})'] = category
-                    if created:
-                        self.stdout.write(self.style.SUCCESS(f'Created Category: {category.name}'))
-                    else:
-                        self.stdout.write(self.style.WARNING(f'Category already exists: {category.name}'))
+                            user = User.objects.get(account_id=fields['account_id'])
+                            self.stdout.write(self.style.WARNING(f'\t⚠️ User exists: {user.username}'))
+                        users[f'User {user_id}'] = user
                 except Exception as e:
-                    self.stdout.write(self.style.ERROR(f'Error creating Category {category_id_str}: {e}'))
+                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting User {user_id}: {e}'))
 
-        # --- Product Model Data ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Loading Product Data...'))
-        product_data_match = re.search(r'--- Dummy Data for Product Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
-        if product_data_match:
-            product_section = product_data_match.group(1).strip()
-            product_entries = re.findall(r'Product (\d+):\n(.*?)(?=(?:Product \d+:)|$)', product_section, re.DOTALL)
-            for product_id_str, data_str in product_entries:
-                data = {}
-                for line in data_str.strip().split('\n'):
+        # --- UserProfile Model 처리 ---
+        self.stdout.write(self.style.MIGRATE_HEADING('UserProfile'))
+        match = re.search(r'--- Dummy Data for UserProfile Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
+        if match:
+            entries = re.findall(r'UserProfile (\d+):\n(.*?)(?=(?:UserProfile \d+:)|$)', match.group(1), re.DOTALL)
+            for profile_id, block in entries:
+                fields = {}
+                for line in block.strip().split('\n'):
                     if ':' in line:
-                        key, value = line.split(':', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        if value == 'None':
-                            data[key] = None
-                        elif value.startswith('[') and value.endswith(']'):
-                            data[key] = [s.strip('"') for s in value[1:-1].split(',')] if value[1:-1] else []
-                        elif key in ['harvest_date']:
-                            data[key] = timezone.datetime.fromisoformat(value).date() if value != 'None' else None
-                        elif key in ['created_at', 'updated_at']:
-                            data[key] = timezone.datetime.fromisoformat(value.replace('Z', '+00:00'))
-                        elif key in ['price', 'stock']:
-                            data[key] = int(value)
-                        else:
-                            data[key] = value.strip("'"")
-
-                seller_ref = data.get('seller')
-                seller_obj = None
-                if seller_ref and seller_ref.startswith('<FK_REFERENCE: '):
-                    seller_key = seller_ref.replace('<FK_REFERENCE: ', '').replace('>', '')
-                    seller_obj = created_users.get(seller_key)
-
-                if seller_obj:
-                    try:
-                        product, created = Product.objects.get_or_create(
-                            name=data['name'],
-                            seller=seller_obj,
-                            defaults={
-                                'description': data.get('description'),
-                                'price': data.get('price'),
-                                'stock': data.get('stock'),
-                                'image_urls': data.get('image_urls'),
-                                'variety': data.get('variety'),
-                                'region': data.get('region'),
-                                'harvest_date': data.get('harvest_date'),
-                                'product_url': data.get('product_url'),
-                                'created_at': data.get('created_at'),
-                                'updated_at': data.get('updated_at'),
-                            }
-                        )
-                        created_products[f'Product {product_id_str} ({data["name"]})'] = product
-                        if created:
-                            self.stdout.write(self.style.SUCCESS(f'Created Product: {product.name}'))
-                        else:
-                            self.stdout.write(self.style.WARNING(f'Product already exists: {product.name}'))
-                    except Exception as e:
-                        self.stdout.write(self.style.ERROR(f'Error creating Product {product_id_str}: {e}'))
-                else:
-                    self.stdout.write(self.style.ERROR(f'Missing seller reference for Product {product_id_str}'))
-
-        # --- ProductCategory Model Data ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Loading ProductCategory Data...'))
-        productcategory_data_match = re.search(r'--- Dummy Data for ProductCategory Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
-        if productcategory_data_match:
-            productcategory_section = productcategory_data_match.group(1).strip()
-            productcategory_entries = re.findall(r'ProductCategory (\d+):\n(.*?)(?=(?:ProductCategory \d+:)|$)', productcategory_section, re.DOTALL)
-            for pc_id_str, data_str in productcategory_entries:
-                data = {}
-                for line in data_str.strip().split('\n'):
-                    if ':' in line:
-                        key, value = line.split(':', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        data[key] = value.strip("'"")
-
-                product_ref = data.get('product')
-                category_ref = data.get('category')
-
-                product_obj = None
-                if product_ref and product_ref.startswith('<FK_REFERENCE: '):
-                    product_key_match = re.search(r'<FK_REFERENCE: (Product \d+ \(.*\))>', product_ref)
-                    if product_key_match:
-                        product_key = product_key_match.group(1)
-                        product_obj = created_products.get(product_key)
-                    else:
-                        self.stdout.write(self.style.WARNING(f'Could not parse product FK_REFERENCE for ProductCategory {pc_id_str}: {product_ref}'))
-
-                category_obj = None
-                if category_ref and category_ref.startswith('<FK_REFERENCE: '):
-                    category_key_match = re.search(r'<FK_REFERENCE: (Category \d+ \(.*\))>', category_ref)
-                    if category_key_match:
-                        category_key = category_key_match.group(1)
-                        category_obj = created_categories.get(category_key)
-                    else:
-                        self.stdout.write(self.style.WARNING(f'Could not parse category FK_REFERENCE for ProductCategory {pc_id_str}: {category_ref}'))
-
-                if product_obj and category_obj:
-                    try:
-                        product_category, created = ProductCategory.objects.get_or_create(
-                            product=product_obj,
-                            category=category_obj,
-                        )
-                        if created:
-                            self.stdout.write(self.style.SUCCESS(f'Created ProductCategory: {product_obj.name} - {category_obj.name}'))
-                        else:
-                            self.stdout.write(self.style.WARNING(f'ProductCategory already exists: {product_obj.name} - {category_obj.name}'))
-                    except Exception as e:
-                        self.stdout.write(self.style.ERROR(f'Error creating ProductCategory {pc_id_str}: {e}'))
-                else:
-                    self.stdout.write(self.style.ERROR(f'Missing product or category reference for ProductCategory {pc_id_str}'))
-
-        # --- Post Model Data ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Loading Post Data...'))
-        post_data_match = re.search(r'--- Dummy Data for Post Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
-        if post_data_match:
-            post_section = post_data_match.group(1).strip()
-            post_entries = re.findall(r'Post (\d+):\n(.*?)(?=(?:Post \d+:)|$)', post_section, re.DOTALL)
-            for post_id_str, data_str in post_entries:
-                data = {}
-                for line in data_str.strip().split('\n'):
-                    if ':' in line:
-                        key, value = line.split(':', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        if value.startswith('[') and value.endswith(']'):
-                            data[key] = [s.strip('"') for s in value[1:-1].split(',')] if value[1:-1] else []
-                        elif key in ['created_at']:
-                            data[key] = timezone.datetime.fromisoformat(value.replace('Z', '+00:00'))
-                        else:
-                            data[key] = value.strip("'"")
-
-                author_ref = data.get('author')
-                author_obj = None
-                if author_ref and author_ref.startswith('<FK_REFERENCE: '):
-                    author_key = author_ref.replace('<FK_REFERENCE: ', '').replace('>', '')
-                    author_obj = created_users.get(author_key)
-
-                if author_obj:
-                    try:
-                        post, created = Post.objects.get_or_create(
-                            author=author_obj,
-                            content=data['content'],
-                            defaults={
-                                'image_urls': data.get('image_urls'),
-                                'created_at': data.get('created_at'),
-                            }
-                        )
-                        created_posts[f'Post {post_id_str}'] = post
-                        if created:
-                            self.stdout.write(self.style.SUCCESS(f'Created Post: {post.content[:30]}...'))
-                        else:
-                            self.stdout.write(self.style.WARNING(f'Post already exists: {post.content[:30]}...'))
-                    except Exception as e:
-                        self.stdout.write(self.style.ERROR(f'Error creating Post {post_id_str}: {e}'))
-                else:
-                    self.stdout.write(self.style.ERROR(f'Missing author reference for Post {post_id_str}'))
-
-        # --- Like Model Data ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Loading Like Data...'))
-        like_data_match = re.search(r'--- Dummy Data for Like Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
-        if like_data_match:
-            like_section = like_data_match.group(1).strip()
-            like_entries = re.findall(r'Like (\d+):\n(.*?)(?=(?:Like \d+:)|$)', like_section, re.DOTALL)
-            for like_id_str, data_str in like_entries:
-                data = {}
-                for line in data_str.strip().split('\n'):
-                    if ':' in line:
-                        key, value = line.split(':', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        if key in ['created_at']:
-                            data[key] = timezone.datetime.fromisoformat(value.replace('Z', '+00:00'))
-                        else:
-                            data[key] = value.strip("'"")
-
-                user_ref = data.get('user')
-                post_ref = data.get('post')
-
-                user_obj = None
-                if user_ref and user_ref.startswith('<FK_REFERENCE: '):
-                    user_key = user_ref.replace('<FK_REFERENCE: ', '').replace('>', '')
-                    user_obj = created_users.get(user_key)
+                        k, v = line.split(':', 1)
+                        fields[k.strip()] = parse_value(k.strip(), v.strip())
                 
-                post_obj = None
-                if post_ref and post_ref.startswith('<FK_REFERENCE: '):
-                    post_key = post_ref.replace('<FK_REFERENCE: ', '').replace('>', '')
-                    post_obj = created_posts.get(post_key)
-
-                if user_obj and post_obj:
-                    try:
-                        like, created = Like.objects.get_or_create(
-                            user=user_obj,
-                            post=post_obj,
-                            defaults={
-                                'created_at': data.get('created_at'),
-                            }
-                        )
-                        if created:
-                            self.stdout.write(self.style.SUCCESS(f'Created Like: {user_obj.username} -> Post {post_obj.id}'))
+                try:
+                    with transaction.atomic():
+                        user_obj = get_fk(fields.get('user'), users, 'User')
+                        if user_obj:
+                            if not UserProfile.objects.filter(user=user_obj).exists():
+                                profile = UserProfile.objects.create(
+                                    user=user_obj,
+                                    profile_image=fields.get('profile_image'),
+                                    bio=fields.get('bio'),
+                                    is_farm_owner=fields.get('is_farm_owner', False),
+                                    is_farm_verified=fields.get('is_farm_verified', False),
+                                    created_at=fields.get('created_at', timezone.now()),
+                                    updated_at=fields.get('updated_at', timezone.now()),
+                                )
+                                self.stdout.write(self.style.SUCCESS(f'\t✅ Created UserProfile for {user_obj.username}'))
+                            else:
+                                profile = UserProfile.objects.get(user=user_obj)
+                                self.stdout.write(self.style.WARNING(f'\t⚠️ UserProfile exists for {user_obj.username}'))
+                            profiles[f'UserProfile {profile_id}'] = profile
                         else:
-                            self.stdout.write(self.style.WARNING(f'Like already exists: {user_obj.username} -> Post {post_obj.id}'))
-                    except Exception as e:
-                        self.stdout.write(self.style.ERROR(f'Error creating Like {like_id_str}: {e}'))
-                else:
-                    self.stdout.write(self.style.ERROR(f'Missing user or post reference for Like {like_id_str}'))
+                            self.stdout.write(self.style.ERROR(f'\t❌ User FK not found for UserProfile {profile_id}'))
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting UserProfile {profile_id}: {e}'))
 
-        # --- Comment Model Data ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Loading Comment Data...'))
-        comment_data_match = re.search(r'--- Dummy Data for Comment Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
-        if comment_data_match:
-            comment_section = comment_data_match.group(1).strip()
-            comment_entries = re.findall(r'Comment (\d+):\n(.*?)(?=(?:Comment \d+:)|$)', comment_section, re.DOTALL)
-            for comment_id_str, data_str in comment_entries:
-                data = {}
-                for line in data_str.strip().split('\n'):
+        # --- Follow Model 처리 ---
+        self.stdout.write(self.style.MIGRATE_HEADING('Follow'))
+        match = re.search(r'--- Dummy Data for Follow Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
+        if match:
+            entries = re.findall(r'Follow (\d+):\n(.*?)(?=(?:Follow \d+:)|$)', match.group(1), re.DOTALL)
+            for follow_id, block in entries:
+                fields = {}
+                for line in block.strip().split('\n'):
                     if ':' in line:
-                        key, value = line.split(':', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        if value == 'None':
-                            data[key] = None
-                        elif key in ['created_at']:
-                            data[key] = timezone.datetime.fromisoformat(value.replace('Z', '+00:00'))
-                        else:
-                            data[key] = value.strip("'"")
-
-                post_ref = data.get('post')
-                user_ref = data.get('user')
-                parent_ref = data.get('parent')
-
-                post_obj = None
-                if post_ref and post_ref.startswith('<FK_REFERENCE: '):
-                    post_key = post_ref.replace('<FK_REFERENCE: ', '').replace('>', '')
-                    post_obj = created_posts.get(post_key)
+                        k, v = line.split(':', 1)
+                        fields[k.strip()] = parse_value(k.strip(), v.strip())
                 
-                user_obj = None
-                if user_ref and user_ref.startswith('<FK_REFERENCE: '):
-                    user_key = user_ref.replace('<FK_REFERENCE: ', '').replace('>', '')
-                    user_obj = created_users.get(user_key)
+                try:
+                    with transaction.atomic():
+                        follower_obj = get_fk(fields.get('follower'), users, 'Follower')
+                        following_obj = get_fk(fields.get('following'), users, 'Following')
 
-                parent_comment_obj = None
-                if parent_ref and parent_ref.startswith('<FK_REFERENCE: '):
-                    parent_comment_key = parent_ref.replace('<FK_REFERENCE: ', '').replace('>', '')
-                    parent_comment_obj = created_comments.get(parent_comment_key)
-
-                if post_obj and user_obj:
-                    try:
-                        comment, created = Comment.objects.get_or_create(
-                            post=post_obj,
-                            user=user_obj,
-                            content=data['content'],
-                            defaults={
-                                'parent': parent_comment_obj,
-                                'created_at': data.get('created_at'),
-                            }
-                        )
-                        created_comments[f'Comment {comment_id_str}'] = comment
-                        if created:
-                            self.stdout.write(self.style.SUCCESS(f'Created Comment: {comment.content[:30]}...'))
+                        if follower_obj and following_obj:
+                            if not Follow.objects.filter(follower=follower_obj, following=following_obj).exists():
+                                follow = Follow.objects.create(
+                                    follower=follower_obj,
+                                    following=following_obj,
+                                    created_at=fields.get('created_at', timezone.now()),
+                                )
+                                self.stdout.write(self.style.SUCCESS(f'\t✅ Created Follow: {follower_obj.username} -> {following_obj.username}'))
+                            else:
+                                follow = Follow.objects.get(follower=follower_obj, following=following_obj)
+                                self.stdout.write(self.style.WARNING(f'\t⚠️ Follow exists: {follower_obj.username} -> {following_obj.username}'))
+                            follows[f'Follow {follow_id}'] = follow
                         else:
-                            self.stdout.write(self.style.WARNING(f'Comment already exists: {comment.content[:30]}...'))
-                    except Exception as e:
-                        self.stdout.write(self.style.ERROR(f'Error creating Comment {comment_id_str}: {e}'))
-                else:
-                    self.stdout.write(self.style.ERROR(f'Missing post or user reference for Comment {comment_id_str}'))
+                            self.stdout.write(self.style.ERROR(f'\t❌ Missing FK for Follow {follow_id}'))
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Follow {follow_id}: {e}'))
 
-        # --- ChatRoom Model Data ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Loading ChatRoom Data...'))
-        chatroom_data_match = re.search(r'--- Dummy Data for ChatRoom Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
-        if chatroom_data_match:
-            chatroom_section = chatroom_data_match.group(1).strip()
-            chatroom_entries = re.findall(r'ChatRoom (\d+):\n(.*?)(?=(?:ChatRoom \d+:)|$)', chatroom_section, re.DOTALL)
-            for room_id_str, data_str in chatroom_entries:
-                data = {}
-                for line in data_str.strip().split('\n'):
+        # --- Category Model 처리 ---
+        self.stdout.write(self.style.MIGRATE_HEADING('Category'))
+        match = re.search(r'--- Dummy Data for Category Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
+        if match:
+            entries = re.findall(r'Category (\d+):\n(.*?)(?=(?:Category \d+:)|$)', match.group(1), re.DOTALL)
+            for category_id, block in entries:
+                fields = {}
+                for line in block.strip().split('\n'):
                     if ':' in line:
-                        key, value = line.split(':', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        if key in ['created_at', 'updated_at']:
-                            data[key] = timezone.datetime.fromisoformat(value.replace('Z', '+00:00'))
-                        else:
-                            data[key] = value.strip("'"")
-
-                user1_ref = data.get('user1')
-                user2_ref = data.get('user2')
-
-                user1_obj = None
-                if user1_ref and user1_ref.startswith('<FK_REFERENCE: '):
-                    user1_key = user1_ref.replace('<FK_REFERENCE: ', '').replace('>', '')
-                    user1_obj = created_users.get(user1_key)
+                        k, v = line.split(':', 1)
+                        fields[k.strip()] = parse_value(k.strip(), v.strip())
                 
-                user2_obj = None
-                if user2_ref and user2_ref.startswith('<FK_REFERENCE: '):
-                    user2_key = user2_ref.replace('<FK_REFERENCE: ', '').replace('>', '')
-                    user2_obj = created_users.get(user2_key)
-
-                if user1_obj and user2_obj:
-                    try:
-                        chatroom, created = ChatRoom.objects.get_or_create(
-                            user1=user1_obj,
-                            user2=user2_obj,
-                            defaults={
-                                'created_at': data.get('created_at'),
-                                'updated_at': data.get('updated_at'),
-                            }
-                        )
-                        created_chatrooms[f'ChatRoom {room_id_str}'] = chatroom
-                        if created:
-                            self.stdout.write(self.style.SUCCESS(f'Created ChatRoom between {user1_obj.username} and {user2_obj.username}'))
+                try:
+                    with transaction.atomic():
+                        parent_obj = get_fk(fields.get('parent'), categories, 'Parent Category')
+                        
+                        if not Category.objects.filter(name=fields['name']).exists():
+                            category = Category.objects.create(
+                                name=fields['name'],
+                                type=fields.get('type'),
+                                icon_image=fields.get('icon_image'),
+                                parent=parent_obj,
+                                created_at=fields.get('created_at', timezone.now()),
+                                updated_at=fields.get('updated_at', timezone.now()),
+                            )
+                            self.stdout.write(self.style.SUCCESS(f'\t✅ Created Category: {category.name}'))
                         else:
-                            self.stdout.write(self.style.WARNING(f'ChatRoom already exists between {user1_obj.username} and {user2_obj.username}'))
-                    except Exception as e:
-                        self.stdout.write(self.style.ERROR(f'Error creating ChatRoom {room_id_str}: {e}'))
-                else:
-                    self.stdout.write(self.style.ERROR(f'Missing user1 or user2 reference for ChatRoom {room_id_str}'))
+                            category = Category.objects.get(name=fields['name'])
+                            self.stdout.write(self.style.WARNING(f'\t⚠️ Category exists: {category.name}'))
+                        categories[f'Category {category_id} ({category.name})'] = category
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Category {category_id}: {e}'))
 
-        # --- Message Model Data ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Loading Message Data...'))
-        message_data_match = re.search(r'--- Dummy Data for Message Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
-        if message_data_match:
-            message_section = message_data_match.group(1).strip()
-            message_entries = re.findall(r'Message (\d+):\n(.*?)(?=(?:Message \d+:)|$)', message_section, re.DOTALL)
-            for msg_id_str, data_str in message_entries:
-                data = {}
-                for line in data_str.strip().split('\n'):
+        # --- Product Model 처리 ---
+        self.stdout.write(self.style.MIGRATE_HEADING('Product'))
+        match = re.search(r'--- Dummy Data for Product Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
+        if match:
+            entries = re.findall(r'Product (\d+):\n(.*?)(?=(?:Product \d+:)|$)', match.group(1), re.DOTALL)
+            for product_id, block in entries:
+                fields = {}
+                for line in block.strip().split('\n'):
                     if ':' in line:
-                        key, value = line.split(':', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        if value == 'True':
-                            data[key] = True
-                        elif value == 'False':
-                            data[key] = False
-                        elif value == 'None':
-                            data[key] = None
-                        elif key in ['created_at']:
-                            data[key] = timezone.datetime.fromisoformat(value.replace('Z', '+00:00'))
-                        else:
-                            data[key] = value.strip("'"")
-
-                room_ref = data.get('room')
-                sender_ref = data.get('sender')
-
-                room_obj = None
-                if room_ref and room_ref.startswith('<FK_REFERENCE: '):
-                    room_key = room_ref.replace('<FK_REFERENCE: ', '').replace('>', '')
-                    room_obj = created_chatrooms.get(room_key)
+                        k, v = line.split(':', 1)
+                        fields[k.strip()] = parse_value(k.strip(), v.strip())
                 
-                sender_obj = None
-                if sender_ref and sender_ref.startswith('<FK_REFERENCE: '):
-                    sender_key = sender_ref.replace('<FK_REFERENCE: ', '').replace('>', '')
-                    sender_obj = created_users.get(sender_key)
+                try:
+                    with transaction.atomic():
+                        seller_obj = get_fk(fields.get('seller'), users, 'Seller')
 
-                if room_obj and sender_obj:
-                    try:
-                        message, created = Message.objects.get_or_create(
-                            room=room_obj,
-                            sender=sender_obj,
-                            content=data['content'],
-                            defaults={
-                                'image_url': data.get('image_url'),
-                                'is_read': data.get('is_read'),
-                                'created_at': data.get('created_at'),
-                            }
-                        )
-                        if created:
-                            self.stdout.write(self.style.SUCCESS(f'Created Message: {message.content[:30]}...'))
+                        if seller_obj:
+                            if not Product.objects.filter(name=fields['name'], seller=seller_obj).exists():
+                                product = Product.objects.create(
+                                    seller=seller_obj,
+                                    name=fields['name'],
+                                    description=fields.get('description'),
+                                    price=fields.get('price'),
+                                    stock=fields.get('stock'),
+                                    image_urls=fields.get('image_urls', []),
+                                    variety=fields.get('variety'),
+                                    region=fields.get('region'),
+                                    harvest_date=fields.get('harvest_date'),
+                                    product_url=fields.get('product_url'),
+                                    created_at=fields.get('created_at', timezone.now()),
+                                    updated_at=fields.get('updated_at', timezone.now()),
+                                )
+                                self.stdout.write(self.style.SUCCESS(f'\t✅ Created Product: {product.name}'))
+                            else:
+                                product = Product.objects.get(name=fields['name'], seller=seller_obj)
+                                self.stdout.write(self.style.WARNING(f'\t⚠️ Product exists: {product.name}'))
+                            products[f'Product {product_id} ({product.name})'] = product
                         else:
-                            self.stdout.write(self.style.WARNING(f'Message already exists: {message.content[:30]}...'))
-                    except Exception as e:
-                        self.stdout.write(self.style.ERROR(f'Error creating Message {msg_id_str}: {e}'))
-                else:
-                    self.stdout.write(self.style.ERROR(f'Missing room or sender reference for Message {msg_id_str}'))
+                            self.stdout.write(self.style.ERROR(f'\t❌ Seller FK not found for Product {product_id}'))
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Product {product_id}: {e}'))
 
+        # --- ProductCategory Model 처리 ---
+        self.stdout.write(self.style.MIGRATE_HEADING('ProductCategory'))
+        match = re.search(r'--- Dummy Data for ProductCategory Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
+        if match:
+            entries = re.findall(r'ProductCategory (\d+):\n(.*?)(?=(?:ProductCategory \d+:)|$)', match.group(1), re.DOTALL)
+            for pc_id, block in entries:
+                fields = {}
+                for line in block.strip().split('\n'):
+                    if ':' in line:
+                        k, v = line.split(':', 1)
+                        fields[k.strip()] = parse_value(k.strip(), v.strip())
+                
+                try:
+                    with transaction.atomic():
+                        product_obj = get_fk(fields.get('product'), products, 'Product')
+                        category_obj = get_fk(fields.get('category'), categories, 'Category')
 
-        self.stdout.write(self.style.SUCCESS('Finished loading dummy data.'))
+                        if product_obj and category_obj:
+                            if not ProductCategory.objects.filter(product=product_obj, category=category_obj).exists():
+                                pc = ProductCategory.objects.create(
+                                    product=product_obj,
+                                    category=category_obj,
+                                )
+                                self.stdout.write(self.style.SUCCESS(f'\t✅ Created ProductCategory: {product_obj.name} - {category_obj.name}'))
+                            else:
+                                pc = ProductCategory.objects.get(product=product_obj, category=category_obj)
+                                self.stdout.write(self.style.WARNING(f'\t⚠️ ProductCategory exists: {product_obj.name} - {category_obj.name}'))
+                            product_categories[f'ProductCategory {pc_id}'] = pc
+                        else:
+                            self.stdout.write(self.style.ERROR(f'\t❌ Missing FK for ProductCategory {pc_id}'))
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting ProductCategory {pc_id}: {e}'))
+
+        # --- Post Model 처리 ---
+        self.stdout.write(self.style.MIGRATE_HEADING('Post'))
+        match = re.search(r'--- Dummy Data for Post Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
+        if match:
+            entries = re.findall(r'Post (\d+):\n(.*?)(?=(?:Post \d+:)|$)', match.group(1), re.DOTALL)
+            for post_id, block in entries:
+                fields = {}
+                for line in block.strip().split('\n'):
+                    if ':' in line:
+                        k, v = line.split(':', 1)
+                        fields[k.strip()] = parse_value(k.strip(), v.strip())
+                
+                try:
+                    with transaction.atomic():
+                        author_obj = get_fk(fields.get('author'), users, 'Author')
+
+                        if author_obj:
+                            # Assuming content is unique enough for get_or_create, or you might need a better unique identifier
+                            if not Post.objects.filter(author=author_obj, content=fields['content']).exists():
+                                post = Post.objects.create(
+                                    author=author_obj,
+                                    content=fields['content'],
+                                    image_urls=fields.get('image_urls', []),
+                                    created_at=fields.get('created_at', timezone.now()),
+                                )
+                                self.stdout.write(self.style.SUCCESS(f'\t✅ Created Post: {post.content[:30]}...'))
+                            else:
+                                post = Post.objects.get(author=author_obj, content=fields['content'])
+                                self.stdout.write(self.style.WARNING(f'\t⚠️ Post exists: {post.content[:30]}...'))
+                            posts[f'Post {post_id}'] = post
+                        else:
+                            self.stdout.write(self.style.ERROR(f'\t❌ Author FK not found for Post {post_id}'))
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Post {post_id}: {e}'))
+
+        # --- Like Model 처리 ---
+        self.stdout.write(self.style.MIGRATE_HEADING('Like'))
+        match = re.search(r'--- Dummy Data for Like Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
+        if match:
+            entries = re.findall(r'Like (\d+):\n(.*?)(?=(?:Like \d+:)|$)', match.group(1), re.DOTALL)
+            for like_id, block in entries:
+                fields = {}
+                for line in block.strip().split('\n'):
+                    if ':' in line:
+                        k, v = line.split(':', 1)
+                        fields[k.strip()] = parse_value(k.strip(), v.strip())
+                
+                try:
+                    with transaction.atomic():
+                        user_obj = get_fk(fields.get('user'), users, 'User')
+                        post_obj = get_fk(fields.get('post'), posts, 'Post')
+
+                        if user_obj and post_obj:
+                            if not Like.objects.filter(user=user_obj, post=post_obj).exists():
+                                like = Like.objects.create(
+                                    user=user_obj,
+                                    post=post_obj,
+                                    created_at=fields.get('created_at', timezone.now()),
+                                )
+                                self.stdout.write(self.style.SUCCESS(f'\t✅ Created Like: {user_obj.username} -> Post {post_obj.id}'))
+                            else:
+                                like = Like.objects.get(user=user_obj, post=post_obj)
+                                self.stdout.write(self.style.WARNING(f'\t⚠️ Like exists: {user_obj.username} -> Post {post_obj.id}'))
+                        else:
+                            self.stdout.write(self.style.ERROR(f'\t❌ Missing FK for Like {like_id}'))
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Like {like_id}: {e}'))
+
+        # --- Comment Model 처리 ---
+        self.stdout.write(self.style.MIGRATE_HEADING('Comment'))
+        match = re.search(r'--- Dummy Data for Comment Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
+        if match:
+            entries = re.findall(r'Comment (\d+):\n(.*?)(?=(?:Comment \d+:)|$)', match.group(1), re.DOTALL)
+            for comment_id, block in entries:
+                fields = {}
+                for line in block.strip().split('\n'):
+                    if ':' in line:
+                        k, v = line.split(':', 1)
+                        fields[k.strip()] = parse_value(k.strip(), v.strip())
+                
+                try:
+                    with transaction.atomic():
+                        post_obj = get_fk(fields.get('post'), posts, 'Post')
+                        user_obj = get_fk(fields.get('user'), users, 'User')
+                        parent_obj = get_fk(fields.get('parent'), comments, 'Parent Comment')
+
+                        if post_obj and user_obj:
+                            # Assuming content is unique enough for get_or_create within a post by a user
+                            if not Comment.objects.filter(post=post_obj, user=user_obj, content=fields['content']).exists():
+                                comment = Comment.objects.create(
+                                    post=post_obj,
+                                    user=user_obj,
+                                    content=fields['content'],
+                                    parent=parent_obj,
+                                    created_at=fields.get('created_at', timezone.now()),
+                                )
+                                self.stdout.write(self.style.SUCCESS(f'\t✅ Created Comment: {comment.content[:30]}...'))
+                                comments[f'Comment {comment_id}'] = comment
+                            else:
+                                comment = Comment.objects.get(post=post_obj, user=user_obj, content=fields['content'])
+                                self.stdout.write(self.style.WARNING(f'\t⚠️ Comment exists: {comment.content[:30]}...'))
+                                comments[f'Comment {comment_id}'] = comment # Ensure it's added to dict even if exists
+                        else:
+                            self.stdout.write(self.style.ERROR(f'\t❌ Missing FK for Comment {comment_id}'))
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Comment {comment_id}: {e}'))
+
+        # --- ChatRoom Model 처리 ---
+        self.stdout.write(self.style.MIGRATE_HEADING('ChatRoom'))
+        match = re.search(r'--- Dummy Data for ChatRoom Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
+        if match:
+            entries = re.findall(r'ChatRoom (\d+):\n(.*?)(?=(?:ChatRoom \d+:)|$)', match.group(1), re.DOTALL)
+            for room_id, block in entries:
+                fields = {}
+                for line in block.strip().split('\n'):
+                    if ':' in line:
+                        k, v = line.split(':', 1)
+                        fields[k.strip()] = parse_value(k.strip(), v.strip())
+                
+                try:
+                    with transaction.atomic():
+                        user1_obj = get_fk(fields.get('user1'), users, 'User1')
+                        user2_obj = get_fk(fields.get('user2'), users, 'User2')
+
+                        if user1_obj and user2_obj:
+                            # Ensure consistent order for get_or_create to avoid duplicates (user1, user2) vs (user2, user1)
+                            if user1_obj.pk > user2_obj.pk:
+                                user1_obj, user2_obj = user2_obj, user1_obj
+
+                            if not ChatRoom.objects.filter(user1=user1_obj, user2=user2_obj).exists():
+                                room = ChatRoom.objects.create(
+                                    user1=user1_obj,
+                                    user2=user2_obj,
+                                    created_at=fields.get('created_at', timezone.now()),
+                                    updated_at=fields.get('updated_at', timezone.now()),
+                                )
+                                self.stdout.write(self.style.SUCCESS(f'\t✅ Created ChatRoom between {user1_obj.username} and {user2_obj.username}'))
+                            else:
+                                room = ChatRoom.objects.get(user1=user1_obj, user2=user2_obj)
+                                self.stdout.write(self.style.WARNING(f'\t⚠️ ChatRoom exists between {user1_obj.username} and {user2_obj.username}'))
+                            chatrooms[f'ChatRoom {room_id}'] = room
+                        else:
+                            self.stdout.write(self.style.ERROR(f'\t❌ Missing FK for ChatRoom {room_id}'))
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting ChatRoom {room_id}: {e}'))
+
+        # --- Message Model 처리 ---
+        self.stdout.write(self.style.MIGRATE_HEADING('Message'))
+        match = re.search(r'--- Dummy Data for Message Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
+        if match:
+            entries = re.findall(r'Message (\d+):\n(.*?)(?=(?:Message \d+:)|$)', match.group(1), re.DOTALL)
+            for msg_id, block in entries:
+                fields = {}
+                for line in block.strip().split('\n'):
+                    if ':' in line:
+                        k, v = line.split(':', 1)
+                        fields[k.strip()] = parse_value(k.strip(), v.strip())
+                
+                try:
+                    with transaction.atomic():
+                        room_obj = get_fk(fields.get('room'), chatrooms, 'ChatRoom')
+                        sender_obj = get_fk(fields.get('sender'), users, 'Sender')
+
+                        if room_obj and sender_obj:
+                            # Assuming content and sender are unique enough for get_or_create within a room
+                            if not Message.objects.filter(room=room_obj, sender=sender_obj, content=fields['content']).exists():
+                                message = Message.objects.create(
+                                    room=room_obj,
+                                    sender=sender_obj,
+                                    content=fields['content'],
+                                    image_url=fields.get('image_url'),
+                                    is_read=fields.get('is_read', False),
+                                    created_at=fields.get('created_at', timezone.now()),
+                                )
+                                self.stdout.write(self.style.SUCCESS(f'\t✅ Created Message: {message.content[:30]}...'))
+                            else:
+                                message = Message.objects.get(room=room_obj, sender=sender_obj, content=fields['content'])
+                                self.stdout.write(self.style.WARNING(f'\t⚠️ Message exists: {message.content[:30]}...'))
+                        else:
+                            self.stdout.write(self.style.ERROR(f'\t❌ Missing FK for Message {msg_id}'))
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Message {msg_id}: {e}'))
+
+        self.stdout.write(self.style.SUCCESS('[완료] 더미 데이터 로딩 끝'))

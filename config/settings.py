@@ -39,13 +39,13 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'users',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'users',
     'posts',
     'products',
     'chat',
@@ -55,6 +55,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt', # Django REST Framework 추가
     'corsheaders',    # django-cors-headers 추가
     'channels', # Django Channels 추가
+    'drf_yasg', # drf-yasg 추가
+    'mptt', # django-mptt 추가
 ]
 
 MIDDLEWARE = [
@@ -98,7 +100,6 @@ REST_FRAMEWORK = {
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-AUTH_USER_MODEL = 'users.User'  #  커스텀 유저 모델 설정
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -109,6 +110,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+AUTH_USER_MODEL = 'users.User'
 
 
 # Password validation

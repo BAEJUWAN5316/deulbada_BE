@@ -19,7 +19,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'seller', 'seller_username', 'name', 'description', 'price', 'stock',
-            'image_urls', 'variety', 'region', 'harvest_date', 'created_at',
+            'image_urls', 'variety', 'region', 'harvest_date', 'created_at', 'updated_at',
             'product_categories', 'categories' # categories 필드 추가
         ]
         read_only_fields = ['seller', 'created_at']

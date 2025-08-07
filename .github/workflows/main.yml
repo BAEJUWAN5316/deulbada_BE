@@ -1,0 +1,50 @@
+name: Django CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 체크아웃 레포지토리
+        uses: actions/checkout@v3
+
+      - name: 파이썬 설정
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.11'
+
+      - name: 의존성 설치
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: PEM 키 파일 설정
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PEM_FILE_CONTENT }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/key.pem
+          chmod 600 ~/.ssh/key.pem
+          
+      - name: 서버 배포
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          ssh -i ~/.ssh/key.pem -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << EOF
+            set -e
+            cd /home/ubuntu/deulbada_BE
+            git pull origin main
+
+            source venv/bin/activate
+            pip install -r requirements.txt
+
+            python3 manage.py collectstatic --noinput
+
+            sudo systemctl restart site.service
+          EOF

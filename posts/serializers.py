@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Post, Comment
 
-# 🔹 게시글 목록 조회용
+# 게시글 목록 조회용
 class PostListSerializer(serializers.ModelSerializer):
     account_id = serializers.CharField(source='author.account_id')
     username = serializers.CharField(source='author.username')
@@ -11,7 +11,7 @@ class PostListSerializer(serializers.ModelSerializer):
         model = Post
         fields = ['id', 'account_id', 'username', 'profile_image', 'content', 'image_urls', 'created_at']
 
-# 🔹 게시글 작성용 (write)
+# 게시글 작성용 (write)
 class PostWriteSerializer(serializers.ModelSerializer):
     author = serializers.CharField(source='author.username', read_only=True)
     image_urls = serializers.ListField(
@@ -22,7 +22,7 @@ class PostWriteSerializer(serializers.ModelSerializer):
         model = Post
         fields = ['id', 'author', 'content', 'image_urls']
 
-# 🔹 게시글 상세 조회용
+# 게시글 상세 조회용
 class PostDetailSerializer(serializers.ModelSerializer):
     account_id = serializers.CharField(source='author.account_id')
     username = serializers.CharField(source='author.username')
@@ -32,7 +32,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
         model = Post
         fields = ['id', 'account_id', 'username', 'profile_image', 'content', 'image_urls', 'created_at']
 
-# 🔹 댓글/대댓글 공용 시리얼라이저
+# 댓글/대댓글 공용 시리얼라이저
 class CommentSerializer(serializers.ModelSerializer):
     user = serializers.CharField(source='user.username', read_only=True)
     parent_id = serializers.IntegerField(write_only=True, required=False)

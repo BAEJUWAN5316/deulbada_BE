@@ -1,8 +1,7 @@
 from rest_framework import serializers
 from .models import User, UserProfile, Report
 from posts.models import Post
-from posts.serializers import PostSerializer
-
+from posts.serializers import PostListSerializer 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -16,7 +15,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
-        fields = '__all__'
+        fields = 'all'
 
 class UserDetailSerializer(serializers.ModelSerializer):
     posts = serializers.SerializerMethodField()
@@ -27,4 +26,4 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
     def get_posts(self, obj):
         posts = Post.objects.filter(user=obj)
-        return PostSerializer(posts, many=True).data
+        return PostListSerializer(posts, many=True).data

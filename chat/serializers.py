@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.conf import settings
 from .models import ChatRoom, Message
-from users.serializers import SimpleUserSerializer #   ֱ  SimpleUserSerializer 
+from users.serializers import UserSerializer #   ֱ  SimpleUserSerializer 
 
 class MessageSerializer(serializers.ModelSerializer):
     sender_username = serializers.ReadOnlyField(source='sender.username')
@@ -12,8 +12,8 @@ class MessageSerializer(serializers.ModelSerializer):
         read_only_fields = ['sender', 'room', 'created_at']
 
 class ChatRoomSerializer(serializers.ModelSerializer):
-    user1_info = SimpleUserSerializer(source='user1', read_only=True)
-    user2_info = SimpleUserSerializer(source='user2', read_only=True)
+    user1_info = UserSerializer(source='user1', read_only=True)
+    user2_info = UserSerializer(source='user2', read_only=True)
     messages = MessageSerializer(many=True, read_only=True)
 
     class Meta:

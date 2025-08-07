@@ -240,7 +240,7 @@ class Command(BaseCommand):
                         else:
                             category = Category.objects.get(name=fields['name'])
                             self.stdout.write(self.style.WARNING(f'\t⚠️ Category exists: {category.name}'))
-                        categories[f'Category {category_id} ({category.name})'] = category
+                        categories[f'Category {category_id}'] = category
                 except Exception as e:
                     self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Category {category_id}: {e}'))
 
@@ -279,7 +279,7 @@ class Command(BaseCommand):
                             else:
                                 product = Product.objects.get(name=fields['name'], seller=seller_obj)
                                 self.stdout.write(self.style.WARNING(f'\t⚠️ Product exists: {product.name}'))
-                            products[f'Product {product_id} ({product.name})'] = product
+                            products[f'Product {product_id}'] = product
                         else:
                             self.stdout.write(self.style.ERROR(f'\t❌ Seller FK not found for Product {product_id}'))
                 except Exception as e:

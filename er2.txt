@@ -3,7 +3,6 @@ User 1:
   account_id: user_id_1
   username: user_name_1
   email: user1@example.com
-  password: hashed_password_1
   is_active: True
   is_staff: False
   date_joined: 2023-01-01T10:00:00Z
@@ -12,7 +11,6 @@ User 2:
   account_id: user_id_2
   username: user_name_2
   email: user2@example.com
-  password: hashed_password_2
   is_active: True
   is_staff: False
   date_joined: 2023-01-01T10:01:00Z
@@ -21,7 +19,6 @@ User 3:
   account_id: user_id_3
   username: user_name_3
   email: user3@example.com
-  password: hashed_password_3
   is_active: True
   is_staff: False
   date_joined: 2023-01-01T10:02:00Z
@@ -30,7 +27,6 @@ User 4:
   account_id: user_id_4
   username: user_name_4
   email: user4@example.com
-  password: hashed_password_4
   is_active: True
   is_staff: False
   date_joined: 2023-01-01T10:03:00Z
@@ -39,7 +35,6 @@ User 5:
   account_id: user_id_5
   username: user_name_5
   email: user5@example.com
-  password: hashed_password_5
   is_active: True
   is_staff: False
   date_joined: 2023-01-01T10:04:00Z
@@ -47,219 +42,251 @@ User 5:
 --- Dummy Data for UserProfile Model ---
 UserProfile 1:
   user: <FK_REFERENCE: User 1>
-  profile_image: https://example.com/profile1.jpg
+  profile_image: http://43.201.70.73/media/dummy_image.jpg
   bio: This is a bio for user 1.
   is_farm_owner: False
   is_farm_verified: False
   created_at: 2023-01-01T10:05:00Z
-  updated_at: 2023-01-01T10:05:00Z
 
 UserProfile 2:
   user: <FK_REFERENCE: User 2>
-  profile_image: https://example.com/profile2.jpg
+  profile_image: http://43.201.70.73/media/dummy_image.jpg
   bio: This is a bio for user 2.
   is_farm_owner: True
   is_farm_verified: False
   created_at: 2023-01-01T10:06:00Z
-  updated_at: 2023-01-01T10:06:00Z
 
 UserProfile 3:
   user: <FK_REFERENCE: User 3>
-  profile_image: https://example.com/profile3.jpg
+  profile_image: http://43.201.70.73/media/dummy_image.jpg
   bio: This is a bio for user 3.
   is_farm_owner: False
   is_farm_verified: True
   created_at: 2023-01-01T10:07:00Z
-  updated_at: 2023-01-01T10:07:00Z
 
 UserProfile 4:
   user: <FK_REFERENCE: User 4>
-  profile_image: https://example.com/profile4.jpg
+  profile_image: http://43.201.70.73/media/dummy_image.jpg
   bio: This is a bio for user 4.
   is_farm_owner: True
   is_farm_verified: True
   created_at: 2023-01-01T10:08:00Z
-  updated_at: 2023-01-01T10:08:00Z
 
 UserProfile 5:
   user: <FK_REFERENCE: User 5>
-  profile_image: https://example.com/profile5.jpg
+  profile_image: http://43.201.70.73/media/dummy_image.jpg
   bio: This is a bio for user 5.
   is_farm_owner: False
   is_farm_verified: False
   created_at: 2023-01-01T10:09:00Z
-  updated_at: 2023-01-01T10:09:00Z
 
---- Dummy Data for Follow Model ---
-Follow 1:
-  follower: <FK_REFERENCE: User 1>
-  following: <FK_REFERENCE: User 2>
+--- Dummy Data for Report Model ---
+Report 1:
+  reporter: <FK_REFERENCE: User 1>
+  target_user: <FK_REFERENCE: User 2>
+  reason: Reason for report 1.
+  status: pending
   created_at: 2023-01-01T10:10:00Z
 
-Follow 2:
-  follower: <FK_REFERENCE: User 2>
-  following: <FK_REFERENCE: User 1>
+Report 2:
+  reporter: <FK_REFERENCE: User 2>
+  target_user: <FK_REFERENCE: User 3>
+  reason: Reason for report 2.
+  status: pending
   created_at: 2023-01-01T10:11:00Z
 
-Follow 3:
-  follower: <FK_REFERENCE: User 3>
-  following: <FK_REFERENCE: User 1>
+Report 3:
+  reporter: <FK_REFERENCE: User 3>
+  target_user: <FK_REFERENCE: User 4>
+  reason: Reason for report 3.
+  status: pending
   created_at: 2023-01-01T10:12:00Z
 
-Follow 4:
-  follower: <FK_REFERENCE: User 4>
-  following: <FK_REFERENCE: User 5>
+Report 4:
+  reporter: <FK_REFERENCE: User 4>
+  target_user: <FK_REFERENCE: User 5>
+  reason: Reason for report 4.
+  status: pending
   created_at: 2023-01-01T10:13:00Z
 
-Follow 5:
-  follower: <FK_REFERENCE: User 5>
-  following: <FK_REFERENCE: User 3>
+Report 5:
+  reporter: <FK_REFERENCE: User 5>
+  target_user: <FK_REFERENCE: User 1>
+  reason: Reason for report 5.
+  status: pending
   created_at: 2023-01-01T10:14:00Z
+
+--- Dummy Data for Notification Model ---
+Notification 1:
+  user: <FK_REFERENCE: User 1>
+  message: Notification message 1.
+  is_read: False
+  created_at: 2023-01-01T10:15:00Z
+
+Notification 2:
+  user: <FK_REFERENCE: User 2>
+  message: Notification message 2.
+  is_read: True
+  created_at: 2023-01-01T10:16:00Z
+
+Notification 3:
+  user: <FK_REFERENCE: User 3>
+  message: Notification message 3.
+  is_read: False
+  created_at: 2023-01-01T10:17:00Z
+
+Notification 4:
+  user: <FK_REFERENCE: User 4>
+  message: Notification message 4.
+  is_read: True
+  created_at: 2023-01-01T10:18:00Z
+
+Notification 5:
+  user: <FK_REFERENCE: User 5>
+  message: Notification message 5.
+  is_read: False
+  created_at: 2023-01-01T10:19:00Z
+
+--- Dummy Data for Block Model ---
+Block 1:
+  blocker: <FK_REFERENCE: User 1>
+  blocked: <FK_REFERENCE: User 2>
+  created_at: 2023-01-01T10:20:00Z
+
+Block 2:
+  blocker: <FK_REFERENCE: User 2>
+  blocked: <FK_REFERENCE: User 3>
+  created_at: 2023-01-01T10:21:00Z
+
+Block 3:
+  blocker: <FK_REFERENCE: User 3>
+  blocked: <FK_REFERENCE: User 4>
+  created_at: 2023-01-01T10:22:00Z
+
+Block 4:
+  blocker: <FK_REFERENCE: User 4>
+  blocked: <FK_REFERENCE: User 5>
+  created_at: 2023-01-01T10:23:00Z
+
+Block 5:
+  blocker: <FK_REFERENCE: User 5>
+  blocked: <FK_REFERENCE: User 1>
+  created_at: 2023-01-01T10:24:00Z
 
 --- Dummy Data for Category Model ---
 Category 1:
-  name: Fruits
-  type: PRODUCT
-  icon_image: https://example.com/icons/fruits.png
+  name: 잎채소류
+  type: agricultural
+  icon_image: http://43.201.70.73/media/dummy_image.jpg
   parent: None
   created_at: 2023-01-01T09:00:00Z
-  updated_at: 2023-01-01T09:00:00Z
 
 Category 2:
-  name: Vegetables
-  type: PRODUCT
-  icon_image: https://example.com/icons/vegetables.png
+  name: 생선류
+  type: fishing
+  icon_image: http://43.201.70.73/media/dummy_image.jpg
   parent: None
   created_at: 2023-01-01T09:01:00Z
-  updated_at: 2023-01-01T09:01:00Z
 
 Category 3:
-  name: Dairy
-  type: PRODUCT
-  icon_image: https://example.com/icons/dairy.png
+  name: 열매채소류
+  type: agricultural
+  icon_image: http://43.201.70.73/media/dummy_image.jpg
   parent: None
   created_at: 2023-01-01T09:02:00Z
-  updated_at: 2023-01-01T09:02:00Z
 
 Category 4:
-  name: Apples
-  type: PRODUCT
-  icon_image: https://example.com/icons/apples.png
-  parent: <FK_REFERENCE: Category 1 (Fruits)>
+  name: 갑각류
+  type: fishing
+  icon_image: http://43.201.70.73/media/dummy_image.jpg
+  parent: None
   created_at: 2023-01-01T09:03:00Z
-  updated_at: 2023-01-01T09:03:00Z
 
 Category 5:
-  name: Carrots
-  type: PRODUCT
-  icon_image: https://example.com/icons/carrots.png
-  parent: <FK_REFERENCE: Category 2 (Vegetables)>
+  name: 뿌리채소류
+  type: agricultural
+  icon_image: http://43.201.70.73/media/dummy_image.jpg
+  parent: None
   created_at: 2023-01-01T09:04:00Z
-  updated_at: 2023-01-01T09:04:00Z
 
---- Dummy Data for Product Model ---
-Product 1:
-  seller: <FK_REFERENCE: User 2>
-  name: Organic Apples
-  description: Fresh organic apples from our farm.
-  price: 5000
-  stock: 100
-  image_urls: ["https://example.com/product1_img1.jpg"]
-  variety: Fuji
-  region: Gangwon
-  harvest_date: 2023-09-15
-  product_url: https://example.com/products/organic-apples
-  created_at: 2023-10-01T10:00:00Z
-  updated_at: 2023-10-01T10:00:00Z
+--- Dummy Data for ChatRoom Model ---
+ChatRoom 1:
+  user1: <FK_REFERENCE: User 1>
+  user2: <FK_REFERENCE: User 2>
+  created_at: 2023-01-08T09:00:00Z
 
-Product 2:
-  seller: <FK_REFERENCE: User 2>
-  name: Fresh Carrots
-  description: Locally grown fresh carrots.
-  price: 3000
-  stock: 200
-  image_urls: ["https://example.com/product2_img1.jpg"]
-  variety: Danvers
-  region: Gyeonggi
-  harvest_date: 2023-10-01
-  product_url: https://example.com/products/fresh-carrots
-  created_at: 2023-10-01T10:01:00Z
-  updated_at: 2023-10-01T10:01:00Z
+ChatRoom 2:
+  user1: <FK_REFERENCE: User 1>
+  user2: <FK_REFERENCE: User 3>
+  created_at: 2023-01-08T09:01:00Z
 
-Product 3:
-  seller: <FK_REFERENCE: User 3>
-  name: Sweet Potatoes
-  description: Delicious sweet potatoes.
-  price: 4500
-  stock: 150
-  image_urls: ["https://example.com/product3_img1.jpg"]
-  variety: Honey
-  region: Jeolla
-  harvest_date: 2023-09-20
-  product_url: https://example.com/products/sweet-potatoes
-  created_at: 2023-10-01T10:02:00Z
-  updated_at: 2023-10-01T10:02:00Z
+ChatRoom 3:
+  user1: <FK_REFERENCE: User 2>
+  user2: <FK_REFERENCE: User 4>
+  created_at: 2023-01-08T09:02:00Z
 
-Product 4:
-  seller: <FK_REFERENCE: User 4>
-  name: Farm Fresh Eggs
-  description: Eggs from happy chickens.
-  price: 7000
-  stock: 50
-  image_urls: ["https://example.com/product4_img1.jpg"]
-  variety: Large
-  region: Chungcheong
-  harvest_date: 2023-10-10
-  product_url: https://example.com/products/farm-fresh-eggs
-  created_at: 2023-10-01T10:03:00Z
-  updated_at: 2023-10-01T10:03:00Z
+ChatRoom 4:
+  user1: <FK_REFERENCE: User 3>
+  user2: <FK_REFERENCE: User 5>
+  created_at: 2023-01-08T09:03:00Z
 
-Product 5:
-  seller: <FK_REFERENCE: User 5>
-  name: Organic Milk
-  description: Fresh organic milk.
-  price: 8000
-  stock: 30
-  image_urls: ["https://example.com/product5_img1.jpg"]
-  variety: Whole
-  region: Gyeongsang
-  harvest_date: None
-  product_url: https://example.com/products/organic-milk
-  created_at: 2023-10-01T10:04:00Z
-  updated_at: 2023-10-01T10:04:00Z
+ChatRoom 5:
+  user1: <FK_REFERENCE: User 4>
+  user2: <FK_REFERENCE: User 1>
+  created_at: 2023-01-08T09:04:00Z
 
---- Dummy Data for ProductCategory Model ---
-ProductCategory 1:
-  product: <FK_REFERENCE: Product 1 (Organic Apples)>
-  category: <FK_REFERENCE: Category 4 (Apples)>
+--- Dummy Data for Message Model ---
+Message 1:
+  room: <FK_REFERENCE: ChatRoom 1>
+  sender: <FK_REFERENCE: User 1>
+  content: Hi User 2!
+  image_url: None
+  is_read: False
+  created_at: 2023-01-08T09:05:00Z
 
-ProductCategory 2:
-  product: <FK_REFERENCE: Product 2 (Fresh Carrots)>
-  category: <FK_REFERENCE: Category 5 (Carrots)>
+Message 2:
+  room: <FK_REFERENCE: ChatRoom 1>
+  sender: <FK_REFERENCE: User 2>
+  content: Hello User 1! How are you?
+  image_url: None
+  is_read: True
+  created_at: 2023-01-08T09:06:00Z
 
-ProductCategory 3:
-  product: <FK_REFERENCE: Product 3 (Sweet Potatoes)>
-  category: <FK_REFERENCE: Category 2 (Vegetables)>
+Message 3:
+  room: <FK_REFERENCE: ChatRoom 2>
+  sender: <FK_REFERENCE: User 1>
+  content: Are you free this afternoon?
+  image_url: None
+  is_read: False
+  created_at: 2023-01-08T09:07:00Z
 
-ProductCategory 4:
-  product: <FK_REFERENCE: Product 4 (Farm Fresh Eggs)>
-  category: <FK_REFERENCE: Category 3 (Dairy)>
+Message 4:
+  room: <FK_REFERENCE: ChatRoom 3>
+  sender: <FK_REFERENCE: User 2>
+  content: Checking in about the product.
+  image_url: http://43.201.70.73/media/dummy_image.jpg
+  is_read: True
+  created_at: 2023-01-08T09:08:00Z
 
-ProductCategory 5:
-  product: <FK_REFERENCE: Product 5 (Organic Milk)>
-  category: <FK_REFERENCE: Category 3 (Dairy)>
+Message 5:
+  room: <FK_REFERENCE: ChatRoom 4>
+  sender: <FK_REFERENCE: User 3>
+  content: Thanks for the info!
+  image_url: None
+  is_read: False
+  created_at: 2023-01-08T09:09:00Z
 
 --- Dummy Data for Post Model ---
 Post 1:
   author: <FK_REFERENCE: User 1>
   content: This is my first post! Hello everyone.
-  image_urls: ["https://example.com/post1_img1.jpg"]
+  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
   created_at: 2023-01-05T10:00:00Z
 
 Post 2:
   author: <FK_REFERENCE: User 2>
   content: Check out these amazing organic vegetables from my farm!
-  image_urls: ["https://example.com/post2_img1.jpg", "https://example.com/post2_img2.jpg"]
+  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
   created_at: 2023-01-05T10:01:00Z
 
 Post 3:
@@ -271,13 +298,13 @@ Post 3:
 Post 4:
   author: <FK_REFERENCE: User 4>
   content: New harvest is ready!
-  image_urls: ["https://example.com/post4_img1.jpg"]
+  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
   created_at: 2023-01-05T10:03:00Z
 
 Post 5:
   author: <FK_REFERENCE: User 5>
   content: A day on the farm.
-  image_urls: ["https://example.com/post5_img1.jpg", "https://example.com/post5_img2.jpg", "https://example.com/post5_img3.jpg"]
+  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
   created_at: 2023-01-05T10:04:00Z
 
 --- Dummy Data for Like Model ---
@@ -342,74 +369,89 @@ Comment 5:
   parent: None
   created_at: 2023-01-05T10:14:00Z
 
---- Dummy Data for ChatRoom Model ---
-ChatRoom 1:
-  user1: <FK_REFERENCE: User 1>
-  user2: <FK_REFERENCE: User 2>
-  created_at: 2023-01-08T09:00:00Z
-  updated_at: 2023-01-08T09:00:00Z
+--- Dummy Data for Product Model ---
+Product 1:
+  seller: <FK_REFERENCE: User 2>
+  name: Organic Apples
+  description: Fresh organic apples from our farm.
+  price: 5000
+  stock: 100
+  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
+  variety: Fuji
+  region: Gangwon
+  harvest_date: 2023-09-15
+  product_url: https://example.com/products/organic-apples
+  created_at: 2023-10-01T10:00:00Z
 
-ChatRoom 2:
-  user1: <FK_REFERENCE: User 1>
-  user2: <FK_REFERENCE: User 3>
-  created_at: 2023-01-08T09:01:00Z
-  updated_at: 2023-01-08T09:01:00Z
+Product 2:
+  seller: <FK_REFERENCE: User 2>
+  name: Fresh Carrots
+  description: Locally grown fresh carrots.
+  price: 3000
+  stock: 200
+  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
+  variety: Danvers
+  region: Gyeonggi
+  harvest_date: 2023-10-01
+  product_url: https://example.com/products/fresh-carrots
+  created_at: 2023-10-01T10:01:00Z
 
-ChatRoom 3:
-  user1: <FK_REFERENCE: User 2>
-  user2: <FK_REFERENCE: User 4>
-  created_at: 2023-01-08T09:02:00Z
-  updated_at: 2023-01-08T09:02:00Z
+Product 3:
+  seller: <FK_REFERENCE: User 3>
+  name: Sweet Potatoes
+  description: Delicious sweet potatoes.
+  price: 4500
+  stock: 150
+  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
+  variety: Honey
+  region: Jeolla
+  harvest_date: 2023-09-20
+  product_url: https://example.com/products/sweet-potatoes
+  created_at: 2023-10-01T10:02:00Z
 
-ChatRoom 4:
-  user1: <FK_REFERENCE: User 3>
-  user2: <FK_REFERENCE: User 5>
-  created_at: 2023-01-08T09:03:00Z
-  updated_at: 2023-01-08T09:03:00Z
+Product 4:
+  seller: <FK_REFERENCE: User 4>
+  name: Farm Fresh Eggs
+  description: Eggs from happy chickens.
+  price: 7000
+  stock: 50
+  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
+  variety: Large
+  region: Chungcheong
+  harvest_date: 2023-10-10
+  product_url: https://example.com/products/farm-fresh-eggs
+  created_at: 2023-10-01T10:03:00Z
 
-ChatRoom 5:
-  user1: <FK_REFERENCE: User 4>
-  user2: <FK_REFERENCE: User 1>
-  created_at: 2023-01-08T09:04:00Z
-  updated_at: 2023-01-08T09:04:00Z
+Product 5:
+  seller: <FK_REFERENCE: User 5>
+  name: Organic Milk
+  description: Fresh organic milk.
+  price: 8000
+  stock: 30
+  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
+  variety: Whole
+  region: Gyeongsang
+  harvest_date: None
+  product_url: https://example.com/products/organic-milk
+  created_at: 2023-10-01T10:04:00Z
 
---- Dummy Data for Message Model ---
-Message 1:
-  room: <FK_REFERENCE: ChatRoom 1>
-  sender: <FK_REFERENCE: User 1>
-  content: Hi User 2!
-  image_url: None
-  is_read: False
-  created_at: 2023-01-08T09:05:00Z
+--- Dummy Data for ProductCategory Model ---
+ProductCategory 1:
+  product: <FK_REFERENCE: Product 1>
+  category: <FK_REFERENCE: Category 1>
 
-Message 2:
-  room: <FK_REFERENCE: ChatRoom 1>
-  sender: <FK_REFERENCE: User 2>
-  content: Hello User 1! How are you?
-  image_url: None
-  is_read: True
-  created_at: 2023-01-08T09:06:00Z
+ProductCategory 2:
+  product: <FK_REFERENCE: Product 2>
+  category: <FK_REFERENCE: Category 3>
 
-Message 3:
-  room: <FK_REFERENCE: ChatRoom 2>
-  sender: <FK_REFERENCE: User 1>
-  content: Are you free this afternoon?
-  image_url: None
-  is_read: False
-  created_at: 2023-01-08T09:07:00Z
+ProductCategory 3:
+  product: <FK_REFERENCE: Product 3>
+  category: <FK_REFERENCE: Category 5>
 
-Message 4:
-  room: <FK_REFERENCE: ChatRoom 3>
-  sender: <FK_REFERENCE: User 2>
-  content: Checking in about the product.
-  image_url: https://example.com/message4_img.jpg
-  is_read: True
-  created_at: 2023-01-08T09:08:00Z
+ProductCategory 4:
+  product: <FK_REFERENCE: Product 4>
+  category: <FK_REFERENCE: Category 1>
 
-Message 5:
-  room: <FK_REFERENCE: ChatRoom 4>
-  sender: <FK_REFERENCE: User 3>
-  content: Thanks for the info!
-  image_url: None
-  is_read: False
-  created_at: 2023-01-08T09:09:00Z
+ProductCategory 5:
+  product: <FK_REFERENCE: Product 5>
+  category: <FK_REFERENCE: Category 2>

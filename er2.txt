@@ -116,62 +116,9 @@ Report 5:
   status: pending
   created_at: 2023-01-01T10:14:00Z
 
---- Dummy Data for Notification Model ---
-Notification 1:
-  user: <FK_REFERENCE: User 1>
-  message: Notification message 1.
-  is_read: False
-  created_at: 2023-01-01T10:15:00Z
 
-Notification 2:
-  user: <FK_REFERENCE: User 2>
-  message: Notification message 2.
-  is_read: True
-  created_at: 2023-01-01T10:16:00Z
 
-Notification 3:
-  user: <FK_REFERENCE: User 3>
-  message: Notification message 3.
-  is_read: False
-  created_at: 2023-01-01T10:17:00Z
 
-Notification 4:
-  user: <FK_REFERENCE: User 4>
-  message: Notification message 4.
-  is_read: True
-  created_at: 2023-01-01T10:18:00Z
-
-Notification 5:
-  user: <FK_REFERENCE: User 5>
-  message: Notification message 5.
-  is_read: False
-  created_at: 2023-01-01T10:19:00Z
-
---- Dummy Data for Block Model ---
-Block 1:
-  blocker: <FK_REFERENCE: User 1>
-  blocked: <FK_REFERENCE: User 2>
-  created_at: 2023-01-01T10:20:00Z
-
-Block 2:
-  blocker: <FK_REFERENCE: User 2>
-  blocked: <FK_REFERENCE: User 3>
-  created_at: 2023-01-01T10:21:00Z
-
-Block 3:
-  blocker: <FK_REFERENCE: User 3>
-  blocked: <FK_REFERENCE: User 4>
-  created_at: 2023-01-01T10:22:00Z
-
-Block 4:
-  blocker: <FK_REFERENCE: User 4>
-  blocked: <FK_REFERENCE: User 5>
-  created_at: 2023-01-01T10:23:00Z
-
-Block 5:
-  blocker: <FK_REFERENCE: User 5>
-  blocked: <FK_REFERENCE: User 1>
-  created_at: 2023-01-01T10:24:00Z
 
 --- Dummy Data for Category Model ---
 Category 1:

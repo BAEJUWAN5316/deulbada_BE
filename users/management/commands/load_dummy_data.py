@@ -12,7 +12,7 @@ import re
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.utils import timezone
-from users.models import User, UserProfile, Report, Notification, Block # Report, Notification, Block 모델 임포트 추가
+from users.models import User, UserProfile, Report # Report 모델만 임포트
 from categories.models import Category
 from products.models import Product, ProductCategory
 from posts.models import Post, Like, Comment
@@ -175,71 +175,7 @@ class Command(BaseCommand):
                 except Exception as e:
                     self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Report {report_id}: {e}'))
 
-        # --- Notification Model 처리 ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Notification'))
-        match = re.search(r'--- Dummy Data for Notification Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
-        if match:
-            entries = re.findall(r'Notification (\d+):\n(.*?)(?=(?:Notification \d+:)|$)', match.group(1), re.DOTALL)
-            for notif_id, block in entries:
-                fields = {}
-                for line in block.strip().split('\n'):
-                    if ':' in line:
-                        k, v = line.split(':', 1)
-                        fields[k.strip()] = parse_value(k.strip(), v.strip())
-
-                try:
-                    with transaction.atomic():
-                        user_obj = get_fk(fields.get('user'), users, 'User')
-
-                        if user_obj:
-                            if not Notification.objects.filter(user=user_obj, message=fields['message']).exists():
-                                notification = Notification.objects.create(
-                                    user=user_obj,
-                                    message=fields.get('message'),
-                                    is_read=fields.get('is_read', False),
-                                    created_at=fields.get('created_at', timezone.now()),
-                                )
-                                self.stdout.write(self.style.SUCCESS(f'\t✅ Created Notification {notif_id} for {user_obj.username}'))
-                            else:
-                                notification = Notification.objects.get(user=user_obj, message=fields['message'])
-                                self.stdout.write(self.style.WARNING(f'\t⚠️ Notification exists {notif_id} for {user_obj.username}'))
-                        else:
-                            self.stdout.write(self.style.ERROR(f'\t❌ Missing FK for Notification {notif_id}'))
-                except Exception as e:
-                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Notification {notif_id}: {e}'))
-
-        # --- Block Model 처리 ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Block'))
-        match = re.search(r'--- Dummy Data for Block Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
-        if match:
-            entries = re.findall(r'Block (\d+):\n(.*?)(?=(?:Block \d+:)|$)', match.group(1), re.DOTALL)
-            for block_id, block_data in entries:
-                fields = {}
-                for line in block_data.strip().split('\n'):
-                    if ':' in line:
-                        k, v = line.split(':', 1)
-                        fields[k.strip()] = parse_value(k.strip(), v.strip())
-
-                try:
-                    with transaction.atomic():
-                        blocker_obj = get_fk(fields.get('blocker'), users, 'Blocker')
-                        blocked_obj = get_fk(fields.get('blocked'), users, 'Blocked')
-
-                        if blocker_obj and blocked_obj:
-                            if not Block.objects.filter(blocker=blocker_obj, blocked=blocked_obj).exists():
-                                block_instance = Block.objects.create(
-                                    blocker=blocker_obj,
-                                    blocked=blocked_obj,
-                                    created_at=fields.get('created_at', timezone.now()),
-                                )
-                                self.stdout.write(self.style.SUCCESS(f'\t✅ Created Block {block_id}: {blocker_obj.username} blocked {blocked_obj.username}'))
-                            else:
-                                block_instance = Block.objects.get(blocker=blocker_obj, blocked=blocked_obj)
-                                self.stdout.write(self.style.WARNING(f'\t⚠️ Block exists {block_id}: {blocker_obj.username} blocked {blocked_obj.username}'))
-                        else:
-                            self.stdout.write(self.style.ERROR(f'\t❌ Missing FK for Block {block_id}'))
-                except Exception as e:
-                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Block {block_id}: {e}'))
+        
 
         # --- Follow Model 처리 ---
 # self.stdout.write(self.style.MIGRATE_HEADING('Follow'))

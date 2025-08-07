@@ -24,8 +24,13 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    # ✅ 서버 상태 확인용 루트
     path('', lambda request: HttpResponse("🚀 서버 정상 작동 중입니다!")),
+
+    # ✅ 관리자
     path('admin/', admin.site.urls),
+
+    # ✅ 사용자 기능
     path('users/', include('users.urls')),
     path('posts/', include('posts.urls')),
     path('products/', include('products.urls')),
@@ -37,5 +42,3 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
-
-

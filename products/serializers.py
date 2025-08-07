@@ -13,16 +13,23 @@ class ProductCategorySerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     product_categories = ProductCategorySerializer(many=True, read_only=True)
     seller_username = serializers.ReadOnlyField(source='seller.username')
+    is_seller_verified = serializers.SerializerMethodField()
     categories = serializers.SerializerMethodField() # 카테고리 이름을 가져오기 위한 필드 추가
 
     class Meta:
         model = Product
         fields = [
-            'id', 'seller', 'seller_username', 'name', 'description', 'price', 'stock',
+            'id', 'seller', 'seller_username', 'is_seller_verified', 'name', 'description', 'price', 'stock',
             'image_urls', 'variety', 'region', 'harvest_date', 'created_at', 'updated_at',
             'product_categories', 'categories' # categories 필드 추가
         ]
         read_only_fields = ['seller', 'created_at']
+
+    def get_is_seller_verified(self, obj):
+        try:
+            return obj.seller.userprofile.is_farm_verified
+        except AttributeError:
+            return False
 
     def get_categories(self, obj):
         # Product에 연결된 모든 카테고리 이름을 리스트로 반환

@@ -1,12 +1,13 @@
-작업하다가 필요한 요청사항이 있어서 정리해서 보내드립니다!
+daphne -p 8000 config.asgi:application
 
-리스트를 무한 스크롤 방식으로 로딩할 예정이라,
-product & post 관련 API에 page와 limit 파라미터를 추가해서 한 번에 받아오는 데이터 양을 제한하고, 필요한 페이지만 요청할 수있는 기능이 필요. (ex /posts?page=1&limit=20)
+이걸로 서버를 켜고
+http://127.0.0.1:8000/chat/chat-test/
+위의 url로 접속했더니
 
-제품카테고리 분기처리 (카테고리별/유저정보관련 총 2가지필요 )
-ex)product/과일류
-ex)product/username or account_id
+웹에서는 아래와 같은 내용이 나오고
+500 Internal Server Error
+Exception inside application.
 
-상품&유저정보데이터에서 판매자 인증여부 받았는지의 값이 필요합니다.
-
-혹시 직접 말로듣는 설명도 필요하시면 말해주세요! 찾아가겠습니다~
+터미널 로그에서는 아래와 같은 에러 로그가 나온다.
+ImportError: cannot import name 'Category' from 'products.models' (C:\Users\MIDI-PC\Desktop\backend\250729_final project\products\models.py)
+127.0.0.1:65150 - - [07/Aug/2025:15:01:11] "GET /favicon.ico" 500 453

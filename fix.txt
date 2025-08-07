@@ -1,24 +1,42 @@
-TemplateDoesNotExist at /products/
-django_filters/rest_framework/form.html
-Request Method:	GET
-Request URL:	http://127.0.0.1:8000/products/
-Django Version:	5.2.4
-Exception Type:	TemplateDoesNotExist
-Exception Value:	
-django_filters/rest_framework/form.html
-Exception Location:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\template\loader.py, line 19, in get_template
-Raised during:	products.views.ProductListCreateView
-Python Executable:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Scripts\python.exe
-Python Version:	3.13.3
-Python Path:	
-['.',
- 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final '
- 'project\\venv\\Scripts\\daphne.exe',
- 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\python313.zip',
- 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\DLLs',
- 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\Lib',
- 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313',
- 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final project\\venv',
- 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final '
- 'project\\venv\\Lib\\site-packages']
-Server time:	Thu, 07 Aug 2025 09:06:48 +0000
+Run ssh -i ~/.ssh/key.pem -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << EOF
+Pseudo-terminal will not be allocated because stdin is not a terminal.
+Warning: Permanently added '***' (ED25519) to the list of known hosts.
+Welcome to Ubuntu 24.04.2 LTS (GNU/Linux 6.8.0-1031-aws x86_64)
+ * Documentation:  https://help.***.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://***.com/pro
+ System information as of Thu Aug  7 18:22:21 KST 2025
+  System load:           0.08
+  Usage of /:            10.5% of 57.08GB
+  Memory usage:          33%
+  Swap usage:            0%
+  Temperature:           -273.1 C
+  Processes:             133
+  Users logged in:       1
+  IPv4 address for ens5: 172.26.9.152
+  IPv6 address for ens5: 2406:da12:745:d400:2ebb:676b:ac6:b47e
+ * Ubuntu Pro delivers the most comprehensive open source security and
+   compliance features.
+   https://***.com/aws/pro
+Expanded Security Maintenance for Applications is not enabled.
+11 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+Enable ESM Apps to receive additional future security updates.
+See https://***.com/esm or run: sudo pro status
+*** System restart required ***
+From https://github.com/BAEJUWAN5316/deulbada_BE
+ * branch            main       -> FETCH_HEAD
+   b461518..81cb6ac  main       -> origin/main
+error: The following untracked working tree files would be overwritten by merge:
+	staticfiles/mptt/arrow-move-black.png
+	staticfiles/mptt/arrow-move-white.png
+	staticfiles/mptt/disclosure-down-black.png
+	staticfiles/mptt/disclosure-down-white.png
+	staticfiles/mptt/disclosure-right-black.png
+	staticfiles/mptt/disclosure-right-white.png
+	staticfiles/mptt/draggable-admin.css
+	staticfiles/mptt/draggable-admin.js
+Please move or remove them before you merge.
+Aborting
+Updating b461518..81cb6ac
+Error: Process completed with exit code 1.

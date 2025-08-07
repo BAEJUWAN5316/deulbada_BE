@@ -1,36 +1,24 @@
-(venv) PS C:\Users\MIDI-PC\Desktop\backend\250729_final project> python manage.py runserver
-Watching for file changes with StatReloader
-Performing system checks...
-
-System check identified no issues (0 silenced).
-Exception in thread django-main-thread:
-Traceback (most recent call last):
-  File "C:\Users\MIDI-PC\AppData\Local\Programs\Python\Python313\Lib\threading.py", line 1041, in _bootstrap_inner
-    self.run()
-    ~~~~~~~~^^
-  File "C:\Users\MIDI-PC\AppData\Local\Programs\Python\Python313\Lib\threading.py", line 992, in run
-    self._target(*self._args, **self._kwargs)
-    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\utils\autoreload.py", line 64, in wrapper
-    fn(*args, **kwargs)
-    ~~^^^^^^^^^^^^^^^^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\core\management\commands\runserver.py", line 137, in inner_run    
-    self.check_migrations()
-    ~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\core\management\base.py", line 587, in check_migrations
-    executor = MigrationExecutor(connections[DEFAULT_DB_ALIAS])
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\db\migrations\executor.py", line 18, in __init__
-    self.loader = MigrationLoader(self.connection)
-                  ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\db\migrations\loader.py", line 58, in __init__
-    self.build_graph()
-    ~~~~~~~~~~~~~~~~^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\db\migrations\loader.py", line 276, in build_graph
-    self.graph.validate_consistency()
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\db\migrations\graph.py", line 198, in validate_consistency        
-    [n.raise_error() for n in self.node_map.values() if isinstance(n, DummyNode)]
-     ~~~~~~~~~~~~~^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\db\migrations\graph.py", line 60, in raise_error
-    raise NodeNotFoundError(self.error_message, self.key, origin=self.origin)  
-django.db.migrations.exceptions.NodeNotFoundError: Migration users.0005_alter_follow_follower_alter_follow_following_and_more dependencies reference nonexistent parent node ('users', '0004_follow')
+TemplateDoesNotExist at /products/
+django_filters/rest_framework/form.html
+Request Method:	GET
+Request URL:	http://127.0.0.1:8000/products/
+Django Version:	5.2.4
+Exception Type:	TemplateDoesNotExist
+Exception Value:	
+django_filters/rest_framework/form.html
+Exception Location:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\template\loader.py, line 19, in get_template
+Raised during:	products.views.ProductListCreateView
+Python Executable:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Scripts\python.exe
+Python Version:	3.13.3
+Python Path:	
+['.',
+ 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final '
+ 'project\\venv\\Scripts\\daphne.exe',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\python313.zip',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\DLLs',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\Lib',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313',
+ 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final project\\venv',
+ 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final '
+ 'project\\venv\\Lib\\site-packages']
+Server time:	Thu, 07 Aug 2025 09:06:48 +0000

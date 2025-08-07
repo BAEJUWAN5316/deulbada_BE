@@ -5,7 +5,7 @@ from .models import Post, Comment
 class PostListSerializer(serializers.ModelSerializer):
     account_id = serializers.CharField(source='author.account_id')
     username = serializers.CharField(source='author.username')
-    profile_image = serializers.URLField(source='author.userprofile.profile_image')
+    profile_image = serializers.URLField(source='author.profile.profile_image')
 
     class Meta:
         model = Post
@@ -26,7 +26,7 @@ class PostWriteSerializer(serializers.ModelSerializer):
 class PostDetailSerializer(serializers.ModelSerializer):
     account_id = serializers.CharField(source='author.account_id')
     username = serializers.CharField(source='author.username')
-    profile_image = serializers.URLField(source='author.userprofile.profile_image')
+    profile_image = serializers.URLField(source='author.profile.profile_image')
 
     class Meta:
         model = Post

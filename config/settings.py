@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'categories',
     # Third-party apps
     'rest_framework',
+    'django_filters',
     'rest_framework_simplejwt', # Django REST Framework 추가
     'corsheaders',    # django-cors-headers 추가
     'channels', # Django Channels 추가
@@ -61,6 +62,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware', # CORS 미들웨어 추가 (CommonMiddleware 위에 위치)
     'django.middleware.common.CommonMiddleware',
@@ -97,6 +99,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 
 
@@ -108,8 +111,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'deulbada',
+        'USER': 'deulbada_user',
+        'PASSWORD': '12345678',  # 위에서 설정한 비밀번호
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 AUTH_USER_MODEL = 'users.User'
@@ -150,6 +157,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

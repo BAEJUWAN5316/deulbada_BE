@@ -27,7 +27,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_is_seller_verified(self, obj):
         try:
-            return obj.seller.userprofile.is_farm_verified
+            return obj.seller.profile.is_farm_verified
         except AttributeError:
             return False
 

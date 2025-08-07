@@ -15,7 +15,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 class ReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
-        fields = 'all'
+        fields = '__all__'
 
 class UserDetailSerializer(serializers.ModelSerializer):
     posts = serializers.SerializerMethodField()
@@ -25,5 +25,5 @@ class UserDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'account_id', 'username', 'email', 'posts']
 
     def get_posts(self, obj):
-        posts = Post.objects.filter(user=obj)
+        posts = Post.objects.filter(author=obj)
         return PostListSerializer(posts, many=True).data

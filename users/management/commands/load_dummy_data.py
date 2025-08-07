@@ -12,7 +12,7 @@ import re
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.utils import timezone
-from users.models import User, UserProfile, Follow
+from users.models import User, UserProfile
 from categories.models import Category
 from products.models import Product, ProductCategory
 from posts.models import Post, Like, Comment
@@ -35,7 +35,7 @@ class Command(BaseCommand):
         # FK 참조용 딕셔너리
         users = {}
         profiles = {}
-        follows = {}
+        # follows = {}
         categories = {}
         products = {}
         product_categories = {}
@@ -140,38 +140,38 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting UserProfile {profile_id}: {e}'))
 
         # --- Follow Model 처리 ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Follow'))
-        match = re.search(r'--- Dummy Data for Follow Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
-        if match:
-            entries = re.findall(r'Follow (\d+):\n(.*?)(?=(?:Follow \d+:)|$)', match.group(1), re.DOTALL)
-            for follow_id, block in entries:
-                fields = {}
-                for line in block.strip().split('\n'):
-                    if ':' in line:
-                        k, v = line.split(':', 1)
-                        fields[k.strip()] = parse_value(k.strip(), v.strip())
-                
-                try:
-                    with transaction.atomic():
-                        follower_obj = get_fk(fields.get('follower'), users, 'Follower')
-                        following_obj = get_fk(fields.get('following'), users, 'Following')
-
-                        if follower_obj and following_obj:
-                            if not Follow.objects.filter(follower=follower_obj, following=following_obj).exists():
-                                follow = Follow.objects.create(
-                                    follower=follower_obj,
-                                    following=following_obj,
-                                    created_at=fields.get('created_at', timezone.now()),
-                                )
-                                self.stdout.write(self.style.SUCCESS(f'\t✅ Created Follow: {follower_obj.username} -> {following_obj.username}'))
-                            else:
-                                follow = Follow.objects.get(follower=follower_obj, following=following_obj)
-                                self.stdout.write(self.style.WARNING(f'\t⚠️ Follow exists: {follower_obj.username} -> {following_obj.username}'))
-                            follows[f'Follow {follow_id}'] = follow
-                        else:
-                            self.stdout.write(self.style.ERROR(f'\t❌ Missing FK for Follow {follow_id}'))
-                except Exception as e:
-                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Follow {follow_id}: {e}'))
+# self.stdout.write(self.style.MIGRATE_HEADING('Follow'))
+# match = re.search(r'--- Dummy Data for Follow Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
+# if match:
+#     entries = re.findall(r'Follow (\d+):\n(.*?)(?=(?:Follow \d+:)|$)', match.group(1), re.DOTALL)
+#     for follow_id, block in entries:
+#         fields = {}
+#         for line in block.strip().split('\n'):
+#             if ':' in line:
+#                 k, v = line.split(':', 1)
+#                 fields[k.strip()] = parse_value(k.strip(), v.strip())
+#         
+#         try:
+#             with transaction.atomic():
+#                 follower_obj = get_fk(fields.get('follower'), users, 'Follower')
+#                 following_obj = get_fk(fields.get('following'), users, 'Following')
+#
+#                 if follower_obj and following_obj:
+#                     if not Follow.objects.filter(follower=follower_obj, following=following_obj).exists():
+#                         follow = Follow.objects.create(
+#                             follower=follower_obj,
+#                             following=following_obj,
+#                             created_at=fields.get('created_at', timezone.now()),
+#                         )
+#                         self.stdout.write(self.style.SUCCESS(f'\t✅ Created Follow: {follower_obj.username} -> {following_obj.username}'))
+#                     else:
+#                         follow = Follow.objects.get(follower=follower_obj, following=following_obj)
+#                         self.stdout.write(self.style.WARNING(f'\t⚠️ Follow exists: {follower_obj.username} -> {following_obj.username}'))
+#                     follows[f'Follow {follow_id}'] = follow
+#                 else:
+#                     self.stdout.write(self.style.ERROR(f'\t❌ Missing FK for Follow {follow_id}'))
+#         except Exception as e:
+#             self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Follow {follow_id}: {e}'))
 
         # --- Category Model 처리 ---
         self.stdout.write(self.style.MIGRATE_HEADING('Category'))

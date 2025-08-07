@@ -39,4 +39,4 @@ Updating b461518..64e5455
 	staticfiles/mptt/draggable-admin.js
 Please move or remove them before you merge.
 Aborting
-Error: Process completed with exit code 1.
+Error: Process completed with exit code 1..

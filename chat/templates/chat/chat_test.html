@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Local WebSocket Test</title>
+</head>
+<body>
+    <h1>Local WebSocket 테스트</h1>
+    <button onclick="sendMessage()">메시지 보내기</button>
+    <ul id="messages"></ul>
+
+    <script>
+        const socket = new WebSocket("ws://127.0.0.1:8000/ws/chat/3/");
+
+        socket.onopen = () => {
+            console.log("✅ 연결 성공");
+            addMessage("서버에 연결되었습니다!");
+        };
+
+        socket.onmessage = (e) => {
+            console.log("📩 메시지 받음:", e.data);
+            addMessage("받은 메시지: " + e.data);
+        };
+
+        socket.onerror = (e) => {
+            console.error("❌ 오류:", e);
+            addMessage("오류 발생!");
+        };
+
+        function sendMessage() {
+            socket.send(JSON.stringify({ message: "로컬 테스트 메시지" }));
+        }
+
+        function addMessage(text) {
+            const ul = document.getElementById("messages");
+            const li = document.createElement("li");
+            li.textContent = text;
+            ul.appendChild(li);
+        }
+    </script>
+</body>
+</html>

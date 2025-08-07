@@ -1,20 +1,30 @@
-# users/serializers.py
 from rest_framework import serializers
-from .models import Report
+from .models import User, UserProfile, Report
+from posts.models import Post
+from posts.serializers import PostSerializer
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'account_id', 'username', 'email']
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ['profile_image', 'bio', 'is_farm_owner', 'is_farm_verified']
 
 class ReportSerializer(serializers.ModelSerializer):
-    reporter = serializers.ReadOnlyField(source='reporter.id')
-
     class Meta:
         model = Report
-        fields = ['id', 'reporter', 'target_user', 'reason', 'created_at']
-        read_only_fields = ['id', 'reporter', 'created_at']
+        fields = '__all__'
 
-    def validate(self, data):
-        reporter = self.context['request'].user
-        target = data['target_user']
-        if reporter == target:
-            raise serializers.ValidationError("자기 자신을 신고할 수 없습니다.")
-        if Report.objects.filter(reporter=reporter, target_user=target).exists():
-            raise serializers.ValidationError("이미 신고한 유저입니다.")
-        return data
+class UserDetailSerializer(serializers.ModelSerializer):
+    posts = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'account_id', 'username', 'email', 'posts']
+
+    def get_posts(self, obj):
+        posts = Post.objects.filter(user=obj)
+        return PostSerializer(posts, many=True).data

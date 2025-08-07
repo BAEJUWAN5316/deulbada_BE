@@ -39,21 +39,24 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'users',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'users',
     'posts',
     'products',
     'chat',
     'categories',
     # Third-party apps
-    'rest_framework', # Django REST Framework 추가
+    'rest_framework',
+    'rest_framework_simplejwt', # Django REST Framework 추가
     'corsheaders',    # django-cors-headers 추가
     'channels', # Django Channels 추가
+    'drf_yasg', # drf-yasg 추가
+    'mptt', # django-mptt 추가
 ]
 
 MIDDLEWARE = [
@@ -88,8 +91,16 @@ TEMPLATES = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+}
+
+
 WSGI_APPLICATION = 'config.wsgi.application'
-AUTH_USER_MODEL = 'users.User' 
 
 
 # Database
@@ -101,6 +112,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+AUTH_USER_MODEL = 'users.User'
 
 
 # Password validation
@@ -146,3 +158,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Channels
 ASGI_APPLICATION = 'config.asgi.application'
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}

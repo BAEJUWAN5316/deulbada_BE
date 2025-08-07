@@ -1,0 +1,13 @@
+daphne -p 8000 config.asgi:application
+
+이걸로 서버를 켜고
+http://127.0.0.1:8000/chat/chat-test/
+위의 url로 접속했더니
+
+웹에서는 아래와 같은 내용이 나오고
+500 Internal Server Error
+Exception inside application.
+
+터미널 로그에서는 아래와 같은 에러 로그가 나온다.
+ImportError: cannot import name 'Category' from 'products.models' (C:\Users\MIDI-PC\Desktop\backend\250729_final project\products\models.py)
+127.0.0.1:65150 - - [07/Aug/2025:15:01:11] "GET /favicon.ico" 500 453

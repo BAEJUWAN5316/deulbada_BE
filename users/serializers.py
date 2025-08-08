@@ -1,22 +1,35 @@
+import re
 from rest_framework import serializers
-from .models import UserProfile, User
+from .models import User
 
-# ✅ 팔로워/팔로잉 목록 조회용 (당신이 만든 것)
-class SimpleUserSerializer(serializers.ModelSerializer):
+
+class UserSignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['account_id', 'username']
+        fields = ['email', 'password']
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
 
-# ✅ 프로필 정보용 시리얼라이저
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserProfile
-        fields = ['profile_image', 'bio', 'is_farm_owner', 'is_farm_verified']
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("이미 사용 중인 이메일입니다.")
+        return value
 
-# ✅ 전체 프로필 조회/수정 시 사용
-class MyProfileSerializer(serializers.ModelSerializer):
-    profile = UserProfileSerializer(source='userprofile')
+    def validate_password(self, value):
+        if len(value) < 8:
+            raise serializers.ValidationError("비밀번호는 최소 8자 이상이어야 합니다.")
 
-    class Meta:
-        model = User
-        fields = ['account_id', 'username', 'email', 'profile']
+        if not re.search(r'[A-Za-z]', value):
+            raise serializers.ValidationError("영문자를 최소 1자 이상 포함해야 합니다.")
+
+        if not re.search(r'\d', value):
+            raise serializers.ValidationError("숫자를 최소 1자 이상 포함해야 합니다.")
+
+        if not re.search(r'[!@#$%^&*(),.?\":{}|<>]', value):
+            raise serializers.ValidationError("특수문자를 최소 1자 이상 포함해야 합니다.")
+
+        return value
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)

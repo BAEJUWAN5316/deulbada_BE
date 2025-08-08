@@ -16,34 +16,18 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault("is_superuser", True)
         return self.create_user(email, password, **extra_fields)
 
-
 class User(AbstractBaseUser, PermissionsMixin):
-    ROLE_CHOICES = (
-        ('consumer', '소비자'),
-        ('producer', '생산자'),
-    )
-
     email = models.EmailField(unique=True)
-    password = models.CharField(max_length=128)
-
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='consumer')
-
-    # 생산자 전용 필드
-    representative_name = models.CharField(max_length=100, blank=True, null=True)
-    business_registration_number = models.CharField(max_length=20, blank=True, null=True)
-    business_document = models.FileField(upload_to='business_docs/', blank=True, null=True)
-
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)  # 생산자일 경우 승인 필요
     is_staff = models.BooleanField(default=False)
     is_profile_completed = models.BooleanField(default=False)
+    is_farm_owner = models.BooleanField(default=False)
+    is_farm_verified = models.BooleanField(default=False)
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     objects = UserManager()
 
     def __str__(self):
-        return f"{self.email} ({self.role})"
+        return self.email

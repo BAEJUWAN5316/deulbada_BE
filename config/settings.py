@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import environ
+import os # 추가
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,26 +40,80 @@ ALLOWED_HOSTS = ['43.201.70.73', '127.0.0.1', 'localhost']
 # Application definition
 
 INSTALLED_APPS = [
-    'users',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'users',
+    'categories',
     'posts',
     'products',
     'chat',
-    'categories',
+    'uploads',
     # Third-party apps
     'rest_framework',
     'django_filters',
-    'rest_framework_simplejwt', # Django REST Framework 추가
-    'corsheaders',    # django-cors-headers 추가
-    'channels', # Django Channels 추가
-    'drf_yasg', # drf-yasg 추가
-    'mptt', # django-mptt 추가
+    'rest_framework_simplejwt',
+    'corsheaders',
+    'channels',
+    'drf_yasg',
+    'mptt',
+    'storages', # S3 스토리지를 위해 추가
 ]
+
+# AWS S3 Settings
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', 'YOUR_AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', 'YOUR_AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', 'your-s3-bucket-name')
+AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'ap-northeast-2') # 예: 서울 리전
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None
+AWS_S3_VERIFY = True # SSL 인증서 검증
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.2/howto/static-files/
+
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Media files (User uploaded files)
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# CORS Headers for S3 direct upload
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000", # 프론트엔드 개발 서버 주소
+    "http://127.0.0.1:3000",
+    # 여기에 실제 프론트엔드 배포 도메인을 추가해야 합니다.
+]
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

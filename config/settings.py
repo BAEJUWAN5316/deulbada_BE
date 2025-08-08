@@ -230,6 +230,7 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.pubsub.RedisPubSubChannelLayer",
         "CONFIG": {
             "hosts": [('127.0.0.1', 6379)], # Redis 기본 포트
+            "password": "deulbada123456"
         },
     }
 }

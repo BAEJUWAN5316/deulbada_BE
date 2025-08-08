@@ -1,80 +1,53 @@
-(venv) ubuntu@ip-172-26-9-152:~/deulbada_BE$ python manage.py load_dummy_data
-[시작] 더미 데이터 로딩
-User
-        ✅ Created User: user_name_1
-        ✅ Created User: user_name_2
-        ✅ Created User: user_name_3
-        ✅ Created User: user_name_4
-        ✅ Created User: user_name_5
-UserProfile
-        ⚠️ UserProfile exists for user_name_1
-        ⚠️ UserProfile exists for user_name_2
-        ⚠️ UserProfile exists for user_name_3
-        ⚠️ UserProfile exists for user_name_4
-        ⚠️ UserProfile exists for user_name_5
-Report
-        ✅ Created Report 1: user_name_1 -> user_name_2
-        ✅ Created Report 2: user_name_2 -> user_name_3
-        ✅ Created Report 3: user_name_3 -> user_name_4
-        ✅ Created Report 4: user_name_4 -> user_name_5
-        ✅ Created Report 5: user_name_5 -> user_name_1
-Category
-        ✅ Created Category: 잎채소류
-        ✅ Created Category: 생선류
-        ✅ Created Category: 열매채소류
-        ✅ Created Category: 갑각류
-        ✅ Created Category: 뿌리채소류
-Product
-        ✅ Created Product: Organic Apples
-        ✅ Created Product: Fresh Carrots
-        ✅ Created Product: Sweet Potatoes
-        ✅ Created Product: Farm Fresh Eggs
-        ✅ Created Product: Organic Milk
-ProductCategory
-        ⚠️ Product FK not found: Product 1
-        ⚠️ Category FK not found: Category 1
-        ❌ Missing FK for ProductCategory 1
-        ⚠️ Product FK not found: Product 2
-        ⚠️ Category FK not found: Category 3
-        ❌ Missing FK for ProductCategory 2
-        ⚠️ Product FK not found: Product 3
-        ⚠️ Category FK not found: Category 5
-        ❌ Missing FK for ProductCategory 3
-        ⚠️ Product FK not found: Product 4
-        ⚠️ Category FK not found: Category 1
-        ❌ Missing FK for ProductCategory 4
-        ⚠️ Product FK not found: Product 5
-        ⚠️ Category FK not found: Category 2
-        ❌ Missing FK for ProductCategory 5
-Post
-        ✅ Created Post: This is my first post! Hello e...
-        ✅ Created Post: Check out these amazing organi...
-        ✅ Created Post: Enjoying the beautiful weather...
-        ✅ Created Post: New harvest is ready!...
-        ✅ Created Post: A day on the farm....
-Like
-        ✅ Created Like: user_name_2 -> Post 1
-        ✅ Created Like: user_name_1 -> Post 2
-        ✅ Created Like: user_name_3 -> Post 1
-        ✅ Created Like: user_name_4 -> Post 3
-        ✅ Created Like: user_name_5 -> Post 2
-Comment
-        ✅ Created Comment: Great post!...
-        ✅ Created Comment: I agree!...
-        ✅ Created Comment: Looks delicious!...
-        ✅ Created Comment: So peaceful....
-        ✅ Created Comment: Can't wait to try!...
-ChatRoom
-        ✅ Created ChatRoom between user_name_1 and user_name_2
-        ✅ Created ChatRoom between user_name_1 and user_name_3
-        ✅ Created ChatRoom between user_name_2 and user_name_4
-        ✅ Created ChatRoom between user_name_3 and user_name_5
-        ✅ Created ChatRoom between user_name_1 and user_name_4
-Message
-        ✅ Created Message: Hi User 2!...
-        ✅ Created Message: Hello User 1! How are you?...
-        ✅ Created Message: Are you free this afternoon?...
-        ✅ Created Message: Checking in about the product....
-        ✅ Created Message: Thanks for the info!...
-[완료] 더미 데이터 로딩 끝
-(venv) ubuntu@ip-172-26-9-152:~/deulbada_BE$
+(venv) ubuntu@ip-172-26-9-152:~/deulbada_BE$ sudo tail -n 50 /var/log/nginx/error.log
+2025/08/08 00:05:42 [error] 112824#112824: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 220.72.154.105, server: 43.201.70.73, request: "GET /admin/ HTTP/1.1", upstream: "http://127.0.0.1:8000/admin/", host: "43.201.70.73"
+(venv) ubuntu@ip-172-26-9-152:~/deulbada_BE$ sudo tail -n 50 /var/log/daphne_deulbada_BE.log
+  File "/home/ubuntu/deulbada_BE/venv/lib/python3.12/site-packages/daphne/utils.py", line 19, in import_by_path
+    target = getattr(target, bit)
+             ^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'config.asgi' has no attribute ''
+Traceback (most recent call last):
+  File "/home/ubuntu/deulbada_BE/venv/bin/daphne", line 8, in <module>
+    sys.exit(CommandLineInterface.entrypoint())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/deulbada_BE/venv/lib/python3.12/site-packages/daphne/cli.py", line 171, in entrypoint
+    cls().run(sys.argv[1:])
+  File "/home/ubuntu/deulbada_BE/venv/lib/python3.12/site-packages/daphne/cli.py", line 239, in run
+    application = self.load_asgi_app(args.application)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/deulbada_BE/venv/lib/python3.12/site-packages/daphne/cli.py", line 208, in load_asgi_app
+    return import_by_path(asgi_app_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/deulbada_BE/venv/lib/python3.12/site-packages/daphne/utils.py", line 19, in import_by_path
+    target = getattr(target, bit)
+             ^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'config.asgi' has no attribute ''
+Traceback (most recent call last):
+  File "/home/ubuntu/deulbada_BE/venv/bin/daphne", line 8, in <module>
+    sys.exit(CommandLineInterface.entrypoint())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/deulbada_BE/venv/lib/python3.12/site-packages/daphne/cli.py", line 171, in entrypoint
+    cls().run(sys.argv[1:])
+  File "/home/ubuntu/deulbada_BE/venv/lib/python3.12/site-packages/daphne/cli.py", line 239, in run
+    application = self.load_asgi_app(args.application)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/deulbada_BE/venv/lib/python3.12/site-packages/daphne/cli.py", line 208, in load_asgi_app
+    return import_by_path(asgi_app_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/deulbada_BE/venv/lib/python3.12/site-packages/daphne/utils.py", line 19, in import_by_path
+    target = getattr(target, bit)
+             ^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'config.asgi' has no attribute ''
+2025-08-07 14:56:39,534 INFO     Starting server at tcp:port=8001:interface=0.0.0.0
+2025-08-07 14:56:39,534 INFO     HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+2025-08-07 14:56:39,535 INFO     Configuring endpoint tcp:port=8001:interface=0.0.0.0
+2025-08-07 14:56:39,535 INFO     Listening on TCP address 0.0.0.0:8001
+2025-08-07 15:17:15,500 INFO     Killed 0 pending application instances
+2025-08-07 15:17:16,292 INFO     Starting server at tcp:port=8001:interface=0.0.0.0
+2025-08-07 15:17:16,293 INFO     HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+2025-08-07 15:17:16,293 INFO     Configuring endpoint tcp:port=8001:interface=0.0.0.0
+2025-08-07 15:17:16,293 INFO     Listening on TCP address 0.0.0.0:8001
+2025-08-07 15:26:30,097 INFO     Killed 0 pending application instances
+2025-08-07 15:28:59,806 INFO     Starting server at tcp:port=8001:interface=0.0.0.0
+2025-08-07 15:28:59,807 INFO     HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+2025-08-07 15:28:59,807 INFO     Configuring endpoint tcp:port=8001:interface=0.0.0.0
+2025-08-07 15:28:59,807 INFO     Listening on TCP address 0.0.0.0:8001

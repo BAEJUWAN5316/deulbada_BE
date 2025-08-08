@@ -1,14 +1,25 @@
+# users/serializers.py
 from rest_framework import serializers
-from .models import UserProfile, User
-
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserProfile
-        fields = ['profile_image', 'bio', 'is_farm_owner', 'is_farm_verified']
+from .models import User
+from posts.serializers import PostSerializer
+from products.serializers import ProductSerializer
 
 class MyProfileSerializer(serializers.ModelSerializer):
-    profile = UserProfileSerializer(source='userprofile')
+    follower_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+    posts = PostSerializer(many=True, read_only=True)
+    products = ProductSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
-        fields = ['account_id', 'username', 'email', 'profile']
+        fields = [
+            'id', 'username', 'nickname', 'profile_image', 'introduction',
+            'follower_count', 'following_count',
+            'posts', 'products'
+        ]
+
+    def get_follower_count(self, obj):
+        return obj.followers.count()
+
+    def get_following_count(self, obj):
+        return obj.followings.count()

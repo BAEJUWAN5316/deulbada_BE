@@ -1,22 +1,21 @@
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
-from .models import UserProfile, User
+from django.contrib.auth import authenticate
 
-# ✅ 팔로워/팔로잉 목록 조회용 (당신이 만든 것)
-class SimpleUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['account_id', 'username']
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
 
-# ✅ 프로필 정보용 시리얼라이저
-class UserProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserProfile
-        fields = ['profile_image', 'bio', 'is_farm_owner', 'is_farm_verified']
+        user = authenticate(request=self.context.get("request"), email=email, password=password)
 
-# ✅ 전체 프로필 조회/수정 시 사용
-class MyProfileSerializer(serializers.ModelSerializer):
-    profile = UserProfileSerializer(source='userprofile')
+        if not user:
+            raise serializers.ValidationError({"detail": "이메일 또는 비밀번호가 잘못되었습니다."})
 
-    class Meta:
-        model = User
-        fields = ['account_id', 'username', 'email', 'profile']
+        data = super().validate(attrs)
+        data.update({
+            "user_id": self.user.id,
+            "email": self.user.email,
+            "message": "로그인 성공"
+        })
+        return data

@@ -1,15 +1,104 @@
-ubuntu@ip-172-26-9-152:~$ sudo tail -f /var/log/nginx/error.log
-2025/08/08 00:05:42 [error] 112824#112824: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 220.72.154.105, server: 43.201.70.73, request: "GET /admin/ HTTP/1.1", upstream: "http://127.0.0.1:8000/admin/", host: "43.201.70.73"
-^C
-ubuntu@ip-172-26-9-152:~$ sudo tail -f /var/log/nginx/access.log
-116.121.241.203 - - [08/Aug/2025:11:46:09 +0900] "GET /products/user_name_5/ HTTP/1.1" 200 510 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
-116.121.241.203 - - [08/Aug/2025:11:46:09 +0900] "GET /products/user_name_5/ HTTP/1.1" 200 510 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
-116.121.241.203 - - [08/Aug/2025:11:52:41 +0900] "POST /api/token/ HTTP/1.1" 200 489 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
-116.121.241.203 - - [08/Aug/2025:11:52:41 +0900] "POST /api/token/ HTTP/1.1" 200 489 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
-116.121.241.203 - - [08/Aug/2025:11:52:41 +0900] "GET /products/user_name_5/ HTTP/1.1" 200 510 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
-116.121.241.203 - - [08/Aug/2025:11:52:41 +0900] "GET /products/user_name_5/ HTTP/1.1" 200 510 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
-116.121.241.203 - - [08/Aug/2025:11:52:54 +0900] "POST /api/token/ HTTP/1.1" 200 489 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
-116.121.241.203 - - [08/Aug/2025:11:52:54 +0900] "POST /api/token/ HTTP/1.1" 200 489 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
-116.121.241.203 - - [08/Aug/2025:11:52:54 +0900] "GET /products/user_name_5/ HTTP/1.1" 200 510 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
-116.121.241.203 - - [08/Aug/2025:11:52:54 +0900] "GET /products/user_name_5/ HTTP/1.1" 200 510 "http://localhost:5173/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
-^C
+(venv) PS C:\Users\MIDI-PC\Desktop\backend\250729_final project> daphne -p 8000 config.asgi:application
+2025-08-08 14:11:36,301 INFO     Starting server at tcp:port=8000:interface=127.0.0.1
+2025-08-08 14:11:36,301 INFO     HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+2025-08-08 14:11:36,302 INFO     Configuring endpoint tcp:port=8000:interface=127.0.0.1
+2025-08-08 14:11:36,302 INFO     Listening on TCP address 127.0.0.1:8000
+127.0.0.1:49297 - - [08/Aug/2025:14:11:37] "GET /chat/chat-test/" 200 1170
+127.0.0.1:49300 - - [08/Aug/2025:14:11:37] "WSCONNECTING /ws/chat/3/" - -
+Not Found: /.well-known/appspecific/com.chrome.devtools.json
+2025-08-08 14:11:37,821 WARNING  Not Found: /.well-known/appspecific/com.chrome.devtools.json
+127.0.0.1:49297 - - [08/Aug/2025:14:11:37] "GET /.well-known/appspecific/com.chrome.devtools.json" 404 4432
+2025-08-08 14:11:40,343 ERROR    Exception inside application: Error 10061 connecting to 127.0.0.1:6379. Connect call failed ('127.0.0.1', 6379).
+Traceback (most recent call last):
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\redis\asyncio\connection.py", line 305, in connect_check_health
+    await self.retry.call_with_retry(
+        lambda: self._connect(), lambda error: self.disconnect()
+    )
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\redis\asyncio\retry.py", line 50, in call_with_retry
+    return await do()
+           ^^^^^^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\redis\asyncio\connection.py", line 760, in _connect
+    reader, writer = await asyncio.open_connection(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        **self._connection_arguments()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\MIDI-PC\AppData\Local\Programs\Python\Python313\Lib\asyncio\streams.py", line 48, in open_connection
+    transport, _ = await loop.create_connection(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        lambda: protocol, host, port, **kwds)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1160, in create_connection
+    raise exceptions[0]
+  File "C:\Users\MIDI-PC\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1135, in create_connection
+    sock = await self._connect_sock(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+        exceptions, addrinfo, laddr_infos)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1038, in _connect_sock
+    await self.sock_connect(sock, address)
+  File "C:\Users\MIDI-PC\AppData\Local\Programs\Python\Python313\Lib\asyncio\selector_events.py", line 641, in sock_connect
+    return await fut
+           ^^^^^^^^^
+  File "C:\Users\MIDI-PC\AppData\Local\Programs\Python\Python313\Lib\asyncio\selector_events.py", line 681, in _sock_connect_cb
+    raise OSError(err, f'Connect call failed {address}')
+ConnectionRefusedError: [Errno 10061] Connect call failed ('127.0.0.1', 6379)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\channels\routing.py", line 48, in __call__
+    return await application(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\channels\sessions.py", line 44, in __call__
+    return await self.inner(dict(scope, cookies=cookies), receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\channels\sessions.py", line 261, in __call__
+    return await self.inner(wrapper.scope, receive, wrapper.send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\channels\auth.py", line 185, in __call__
+    return await super().__call__(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\channels\middleware.py", line 24, in __call__
+    return await self.inner(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\channels\routing.py", line 118, in __call__
+    return await application(
+           ^^^^^^^^^^^^^^^^^^
+    ...<10 lines>...
+    )
+    ^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\channels\consumer.py", line 95, in app
+    return await consumer(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\channels\consumer.py", line 46, in __call__
+    self.channel_name = await self.channel_layer.new_channel()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\channels_redis\pubsub.py", line 24, in _async_proxy
+    return await getattr(layer, name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\channels_redis\pubsub.py", line 162, in new_channel
+    await self._subscribe_to_channel(channel)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\channels_redis\pubsub.py", line 141, in _subscribe_to_channel
+    await shard.subscribe(channel)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\channels_redis\pubsub.py", line 281, in subscribe
+    await self._pubsub.subscribe(channel)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\redis\asyncio\client.py", line 1071, in subscribe
+    ret_val = await self.execute_command("SUBSCRIBE", *new_channels.keys())
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\redis\asyncio\client.py", line 924, in execute_command
+    await self.connect()
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\redis\asyncio\client.py", line 934, in connect
+    self.connection = await self.connection_pool.get_connection()
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\redis\asyncio\connection.py", line 1149, in get_connection
+    await self.ensure_connection(connection)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\redis\asyncio\connection.py", line 1182, in ensure_connection
+    await connection.connect()
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\redis\asyncio\connection.py", line 296, in connect
+    await self.connect_check_health(check_health=True)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\redis\asyncio\connection.py", line 315, in connect_check_health
+    raise ConnectionError(self._error_message(e))
+redis.exceptions.ConnectionError: Error 10061 connecting to 127.0.0.1:6379. Connect call failed ('127.0.0.1', 6379).
+127.0.0.1:49300 - - [08/Aug/2025:14:11:40] "WSDISCONNECT /ws/chat/3/" - -

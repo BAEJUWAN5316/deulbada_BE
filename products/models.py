@@ -8,7 +8,7 @@ class Product(TimeStampedModel):
     description = models.TextField()
     price = models.PositiveIntegerField()
     stock = models.PositiveIntegerField()
-    image_urls = models.JSONField(default=list, blank=True)
+    image_urls = models.URLField(default=list, blank=True)
     variety = models.CharField(max_length=50, blank=True)
     region = models.CharField(max_length=50, blank=True)
     harvest_date = models.DateField(null=True, blank=True)

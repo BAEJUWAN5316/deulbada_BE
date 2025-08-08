@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import PresignedUrlView
+from .views import FileUploadView
 
 urlpatterns = [
-    path('presigned-url/', PresignedUrlView.as_view(), name='presigned-url'),
+    path('presigned-url/', FileUploadView.as_view(), name='presigned-url'),
 ]

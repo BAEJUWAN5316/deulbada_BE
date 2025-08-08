@@ -5,38 +5,77 @@
     <title>Local WebSocket Test</title>
 </head>
 <body>
-    <h1>Local WebSocket 테스트</h1>
-    <button onclick="sendMessage()">메시지 보내기</button>
+    <h1>배포서버 WebSocket 테스트</h1>
+    <button id="sendBtn">메시지 보내기</button>
     <ul id="messages"></ul>
 
     <script>
-        const socket = new WebSocket("ws://43.201.70.73/ws/chat/3/");
+        let socket;
 
-        socket.onopen = () => {
-            console.log("✅ 연결 성공");
-            addMessage("서버에 연결되었습니다!");
-        };
+        // DOM이 완전히 로드된 후 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM 로드 완료");
+            
+            function addMessage(text) {
+                const ul = document.getElementById("messages");
+                if (!ul) {
+                    console.error("messages 요소를 찾을 수 없습니다!");
+                    return;
+                }
+                const li = document.createElement("li");
+                li.textContent = new Date().toLocaleTimeString() + " - " + text;
+                ul.appendChild(li);
+                console.log("메시지 추가됨:", text);
+            }
 
-        socket.onmessage = (e) => {
-            console.log("📩 메시지 받음:", e.data);
-            addMessage("받은 메시지: " + e.data);
-        };
+            function sendMessage() {
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    const message = { message: "로컬 테스트 메시지" };
+                    socket.send(JSON.stringify(message));
+                    console.log("📤 전송한 메시지:", message);
+                    addMessage("📤 메시지 전송: " + message.message);
+                } else {
+                    console.log("❌ WebSocket이 연결되지 않음");
+                    addMessage("WebSocket 연결되지 않음!");
+                }
+            }
 
-        socket.onerror = (e) => {
-            console.error("❌ 오류:", e);
-            addMessage("오류 발생!");
-        };
+            // 버튼 클릭 이벤트 추가
+            const sendBtn = document.getElementById("sendBtn");
+            if (sendBtn) {
+                sendBtn.addEventListener('click', sendMessage);
+            }
 
-        function sendMessage() {
-            socket.send(JSON.stringify({ message: "로컬 테스트 메시지" }));
-        }
+            // WebSocket 연결
+            socket = new WebSocket("ws://43.201.70.73/ws/chat/1/");
 
-        function addMessage(text) {
-            const ul = document.getElementById("messages");
-            const li = document.createElement("li");
-            li.textContent = text;
-            ul.appendChild(li);
-        }
+            socket.onopen = () => {
+                console.log("✅ 연결 성공");
+                addMessage("서버에 연결되었습니다!");
+            };
+
+            socket.onmessage = (e) => {
+                console.log("📩 원본 데이터:", e.data);
+                try {
+                    const data = JSON.parse(e.data);
+                    console.log("📩 파싱된 데이터:", data);
+                    addMessage(`[${data.sender}]: ${data.message}`);
+                } catch (error) {
+                    console.log("📩 JSON 파싱 실패, 원본 텍스트:", e.data);
+                    addMessage("받은 메시지: " + e.data);
+                }
+            };
+
+            socket.onerror = (e) => {
+                console.error("❌ 오류:", e);
+                addMessage("오류 발생!");
+            };
+
+            socket.onclose = (e) => {
+                console.log("🔌 연결 종료:", e.code, e.reason);
+                addMessage(`연결 종료됨: ${e.code}`);
+            };
+        });
     </script>
 </body>
 </html>

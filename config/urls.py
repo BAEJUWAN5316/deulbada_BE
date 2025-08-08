@@ -35,7 +35,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # ✅ 사용자 기능
-        path('api/uploads/', include('uploads.urls')),
+    path('api/uploads/', include('uploads.urls')),
     path('api/users/', include('users.urls')),
 
     path('posts/', include('posts.urls')),

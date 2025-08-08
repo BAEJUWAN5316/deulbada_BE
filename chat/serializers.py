@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from django.conf import settings
 from .models import ChatRoom, Message
-from users.serializers import SimpleUserSerializer #   ֱ  SimpleUserSerializer 
+from users.serializers import UserSerializer #   ֱ  SimpleUserSerializer 
+from django.contrib.auth import get_user_model
+User = get_user_model() 
 
 class MessageSerializer(serializers.ModelSerializer):
     sender_username = serializers.ReadOnlyField(source='sender.username')
@@ -12,8 +14,8 @@ class MessageSerializer(serializers.ModelSerializer):
         read_only_fields = ['sender', 'room', 'created_at']
 
 class ChatRoomSerializer(serializers.ModelSerializer):
-    user1_info = SimpleUserSerializer(source='user1', read_only=True)
-    user2_info = SimpleUserSerializer(source='user2', read_only=True)
+    user1_info = UserSerializer(source='user1', read_only=True)
+    user2_info = UserSerializer(source='user2', read_only=True)
     messages = MessageSerializer(many=True, read_only=True)
 
     class Meta:
@@ -31,7 +33,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         
         # user2_id를 User 인스턴스로 변환
         try:
-            user2 = settings.AUTH_USER_MODEL.objects.get(id=user2_id)
+            user2 = User.objects.get(id=user2_id)
         except settings.AUTH_USER_MODEL.DoesNotExist:
             raise serializers.ValidationError("유효하지 않은 user2 ID입니다.")
 

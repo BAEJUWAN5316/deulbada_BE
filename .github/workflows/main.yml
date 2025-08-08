@@ -30,7 +30,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/key.pem
           chmod 600 ~/.ssh/key.pem
-          
+
       - name: 서버 배포
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
@@ -45,6 +45,9 @@ jobs:
             pip install -r requirements.txt
 
             python3 manage.py collectstatic --noinput
+            python3 manage.py migrate --noinput
 
-            sudo systemctl restart site.service
+            sudo systemctl restart gunicorn.service
+            sudo systemctl restart daphne.service
+            sudo systemctl restart nginx
           EOF

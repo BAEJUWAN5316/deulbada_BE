@@ -12,7 +12,7 @@ import re
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.utils import timezone
-from users.models import User, UserProfile, Follow
+from users.models import User, UserProfile, Report # Report 모델만 임포트
 from categories.models import Category
 from products.models import Product, ProductCategory
 from posts.models import Post, Like, Comment
@@ -35,7 +35,7 @@ class Command(BaseCommand):
         # FK 참조용 딕셔너리
         users = {}
         profiles = {}
-        follows = {}
+        # follows = {}
         categories = {}
         products = {}
         product_categories = {}
@@ -49,8 +49,9 @@ class Command(BaseCommand):
             if val == 'True': return True
             if val == 'False': return False
             if val == 'None': return None
-            if key in ['created_at', 'updated_at', 'date_joined']:
+            if key in ['created_at', 'updated_at', 'date_joined', 'harvest_date']:
                 try:
+                    # 'Z'를 '+00:00'으로 대체하여 fromisoformat이 UTC를 올바르게 파싱하도록 함
                     return timezone.datetime.fromisoformat(val.replace('Z', '+00:00'))
                 except Exception:
                     self.stdout.write(self.style.ERROR(f'\t⚠️ 날짜 파싱 실패: {val}'))
@@ -58,6 +59,7 @@ class Command(BaseCommand):
             if key in ['price', 'stock']:
                 return int(val) if val.isdigit() else 0
             if val.startswith('[') and val.endswith(']'):
+                # JSONField를 위한 리스트 파싱
                 return [v.strip(" \"'") for v in val[1:-1].split(',') if v.strip()]
             return val
 
@@ -89,7 +91,7 @@ class Command(BaseCommand):
                                 account_id=fields['account_id'],
                                 username=fields['username'],
                                 email=fields['email'],
-                                password=fields['password'],
+                                password=fields.get('password', 'default_password'), # 비밀번호 필드 추가
                             )
                             user.is_active = fields.get('is_active', True)
                             user.is_staff = fields.get('is_staff', False)
@@ -127,7 +129,6 @@ class Command(BaseCommand):
                                     is_farm_owner=fields.get('is_farm_owner', False),
                                     is_farm_verified=fields.get('is_farm_verified', False),
                                     created_at=fields.get('created_at', timezone.now()),
-                                    updated_at=fields.get('updated_at', timezone.now()),
                                 )
                                 self.stdout.write(self.style.SUCCESS(f'\t✅ Created UserProfile for {user_obj.username}'))
                             else:
@@ -139,39 +140,77 @@ class Command(BaseCommand):
                 except Exception as e:
                     self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting UserProfile {profile_id}: {e}'))
 
-        # --- Follow Model 처리 ---
-        self.stdout.write(self.style.MIGRATE_HEADING('Follow'))
-        match = re.search(r'--- Dummy Data for Follow Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
+        # --- Report Model 처리 ---
+        self.stdout.write(self.style.MIGRATE_HEADING('Report'))
+        match = re.search(r'--- Dummy Data for Report Model ---\n(.*?)(?=--- Dummy Data for|\Z)', content, re.DOTALL)
         if match:
-            entries = re.findall(r'Follow (\d+):\n(.*?)(?=(?:Follow \d+:)|$)', match.group(1), re.DOTALL)
-            for follow_id, block in entries:
+            entries = re.findall(r'Report (\d+):\n(.*?)(?=(?:Report \d+:)|$)', match.group(1), re.DOTALL)
+            for report_id, block in entries:
                 fields = {}
                 for line in block.strip().split('\n'):
                     if ':' in line:
                         k, v = line.split(':', 1)
                         fields[k.strip()] = parse_value(k.strip(), v.strip())
-                
+
                 try:
                     with transaction.atomic():
-                        follower_obj = get_fk(fields.get('follower'), users, 'Follower')
-                        following_obj = get_fk(fields.get('following'), users, 'Following')
+                        reporter_obj = get_fk(fields.get('reporter'), users, 'Reporter')
+                        target_user_obj = get_fk(fields.get('target_user'), users, 'Target User')
 
-                        if follower_obj and following_obj:
-                            if not Follow.objects.filter(follower=follower_obj, following=following_obj).exists():
-                                follow = Follow.objects.create(
-                                    follower=follower_obj,
-                                    following=following_obj,
+                        if reporter_obj and target_user_obj:
+                            if not Report.objects.filter(reporter=reporter_obj, target_user=target_user_obj, reason=fields['reason']).exists():
+                                report = Report.objects.create(
+                                    reporter=reporter_obj,
+                                    target_user=target_user_obj,
+                                    reason=fields.get('reason'),
+                                    status=fields.get('status', 'pending'),
                                     created_at=fields.get('created_at', timezone.now()),
                                 )
-                                self.stdout.write(self.style.SUCCESS(f'\t✅ Created Follow: {follower_obj.username} -> {following_obj.username}'))
+                                self.stdout.write(self.style.SUCCESS(f'\t✅ Created Report {report_id}: {reporter_obj.username} -> {target_user_obj.username}'))
                             else:
-                                follow = Follow.objects.get(follower=follower_obj, following=following_obj)
-                                self.stdout.write(self.style.WARNING(f'\t⚠️ Follow exists: {follower_obj.username} -> {following_obj.username}'))
-                            follows[f'Follow {follow_id}'] = follow
+                                report = Report.objects.get(reporter=reporter_obj, target_user=target_user_obj, reason=fields['reason'])
+                                self.stdout.write(self.style.WARNING(f'\t⚠️ Report exists {report_id}: {reporter_obj.username} -> {target_user_obj.username}'))
                         else:
-                            self.stdout.write(self.style.ERROR(f'\t❌ Missing FK for Follow {follow_id}'))
+                            self.stdout.write(self.style.ERROR(f'\t❌ Missing FK for Report {report_id}'))
                 except Exception as e:
-                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Follow {follow_id}: {e}'))
+                    self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Report {report_id}: {e}'))
+
+        
+
+        # --- Follow Model 처리 ---
+# self.stdout.write(self.style.MIGRATE_HEADING('Follow'))
+# match = re.search(r'--- Dummy Data for Follow Model ---\n(.*?)(?=--- Dummy Data for for|\Z)', content, re.DOTALL)
+# if match:
+#     entries = re.findall(r'Follow (\d+):\n(.*?)(?=(?:Follow \d+:)|$)', match.group(1), re.DOTALL)
+#     for follow_id, block in entries:
+#         fields = {}
+#         for line in block.strip().split('\n'):
+#             if ':' in line:
+#                 k, v = line.split(':', 1)
+#                 fields[k.strip()] = parse_value(k.strip(), v.strip())
+#         
+#         try:
+#             with transaction.atomic():
+#                 follower_obj = get_fk(fields.get('follower'), users, 'Follower')
+#                 following_obj = get_fk(fields.get('following'), users, 'Following')
+#
+#                 if follower_obj and following_obj:
+#                     # Assuming unique_together = ('follower', 'following')
+#                     if not Follow.objects.filter(follower=follower_obj, following=following_obj).exists():
+#                         follow = Follow.objects.create(
+#                             follower=follower_obj,
+#                             following=following_obj,
+#                             created_at=fields.get('created_at', timezone.now()),
+#                         )
+#                         self.stdout.write(self.style.SUCCESS(f'\t✅ Created Follow: {follower_obj.username} -> {following_obj.username}'))
+#                     else:
+#                         follow = Follow.objects.get(follower=follower_obj, following=following_obj)
+#                         self.stdout.write(self.style.WARNING(f'\t⚠️ Follow exists: {follower_obj.username} -> {following_obj.username}'))
+#                     # follows[f'Follow {follow_id}'] = follow # Uncomment if Follow model is used as FK
+#                 else:
+#                     self.stdout.write(self.style.ERROR(f'\t❌ Missing FK for Follow {follow_id}'))
+#         except Exception as e:
+#             self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Follow {follow_id}: {e}'))
 
         # --- Category Model 처리 ---
         self.stdout.write(self.style.MIGRATE_HEADING('Category'))
@@ -196,13 +235,12 @@ class Command(BaseCommand):
                                 icon_image=fields.get('icon_image'),
                                 parent=parent_obj,
                                 created_at=fields.get('created_at', timezone.now()),
-                                updated_at=fields.get('updated_at', timezone.now()),
                             )
                             self.stdout.write(self.style.SUCCESS(f'\t✅ Created Category: {category.name}'))
                         else:
                             category = Category.objects.get(name=fields['name'])
                             self.stdout.write(self.style.WARNING(f'\t⚠️ Category exists: {category.name}'))
-                        categories[f'Category {category_id} ({category.name})'] = category
+                        categories[f'Category {category_id}'] = category
                 except Exception as e:
                     self.stdout.write(self.style.ERROR(f'\t❌ Error creating/getting Category {category_id}: {e}'))
 
@@ -236,13 +274,12 @@ class Command(BaseCommand):
                                     harvest_date=fields.get('harvest_date'),
                                     product_url=fields.get('product_url'),
                                     created_at=fields.get('created_at', timezone.now()),
-                                    updated_at=fields.get('updated_at', timezone.now()),
                                 )
                                 self.stdout.write(self.style.SUCCESS(f'\t✅ Created Product: {product.name}'))
                             else:
                                 product = Product.objects.get(name=fields['name'], seller=seller_obj)
                                 self.stdout.write(self.style.WARNING(f'\t⚠️ Product exists: {product.name}'))
-                            products[f'Product {product_id} ({product.name})'] = product
+                            products[f'Product {product_id}'] = product
                         else:
                             self.stdout.write(self.style.ERROR(f'\t❌ Seller FK not found for Product {product_id}'))
                 except Exception as e:
@@ -415,7 +452,6 @@ class Command(BaseCommand):
                                     user1=user1_obj,
                                     user2=user2_obj,
                                     created_at=fields.get('created_at', timezone.now()),
-                                    updated_at=fields.get('updated_at', timezone.now()),
                                 )
                                 self.stdout.write(self.style.SUCCESS(f'\t✅ Created ChatRoom between {user1_obj.username} and {user2_obj.username}'))
                             else:

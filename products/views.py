@@ -29,7 +29,9 @@ class ProductListCreateView(generics.ListCreateAPIView):
             try:
                 # 카테고리 이름으로 필터링
                 category = Category.objects.get(name=filter_by)
-                return Product.objects.filter(category=category)
+                sub_categories = category.get_descendants(include_self=True)
+                category_ids = [cat.id for cat in sub_categories]
+                return Product.objects.filter(product_categories__category_id__in=category_ids).distinct()
             except Category.DoesNotExist:
                 # 사용자 이름(username)으로 필터링
                 user = get_object_or_404(User, username=filter_by)

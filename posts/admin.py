@@ -8,10 +8,10 @@ class PostAdmin(admin.ModelAdmin):
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'post', 'author', 'created_at')
-    search_fields = ('post__title', 'author__username')
+    list_display = ('id', 'post', 'user', 'created_at')
+    search_fields = ('post__content', 'user__username')
 
 @admin.register(Like)
 class LikeAdmin(admin.ModelAdmin):
     list_display = ('id', 'post', 'user', 'created_at')
-    search_fields = ('post__title', 'user__username')
+    search_fields = ('post__content', 'user__username')

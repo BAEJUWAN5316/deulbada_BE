@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from core.permissions.is_owner import IsOwner
 from .models import Image
 from .serializers import ImageSerializer
 
@@ -9,7 +10,7 @@ class ImageViewSet(viewsets.ModelViewSet):
     queryset = Image.objects.all()
     serializer_class = ImageSerializer
     parser_classes = (MultiPartParser, FormParser,)
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwner]
 
     def perform_create(self, serializer):
         # Save the image and associate it with the current user if authenticated

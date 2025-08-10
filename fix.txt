@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ubuntu@ip-172-26-9-152:~/deulbada_BE/config$ sudo nano /etc/systemd/system/daphne_deulbada_BE.service
 ubuntu@ip-172-26-9-152:~/deulbada_BE/config$ /home/ubuntu/deulbada_BE/venv/bin/daphne -b 0.0.0.0 -p 8001 config.asgi:application
 Traceback (most recent call last):
@@ -26,3 +27,12 @@ Traceback (most recent call last):
   File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
   File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
 ModuleNotFoundError: No module named 'config'
+=======
+(venv) ubuntu@ip-172-26-9-152:~/deulbada_BE$ python3 manage.py migrate
+Operations to perform:
+  Apply all migrations: admin, auth, categories, chat, contenttypes, posts, products, sessions, uploads, users
+Running migrations:
+  No migrations to apply.
+  Your models in app(s): 'products' have changes that are not yet reflected in a migration, and so won't be applied.
+  Run 'manage.py makemigrations' to make new migrations, and then re-run 'manage.py migrate' to apply them.
+>>>>>>> dev

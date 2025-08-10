@@ -1,6 +1,10 @@
-from django.urls import path
-from .views import FileUploadView
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import ImageViewSet
+
+router = DefaultRouter()
+router.register(r'images', ImageViewSet)
 
 urlpatterns = [
-    path('presigned-url/', FileUploadView.as_view(), name='presigned-url'),
+    path('', include(router.urls)),
 ]

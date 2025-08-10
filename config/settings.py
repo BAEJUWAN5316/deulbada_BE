@@ -61,18 +61,18 @@ INSTALLED_APPS = [
     'channels',
     'drf_yasg',
     'mptt',
-    'storages', # S3 스토리지를 위해 추가
+    # 'storages', # S3 스토리지를 위해 추가
 ]
 
-# AWS S3 Settings
-AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID', default='YOUR_AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY', default='YOUR_AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME', default='your-s3-bucket-name')
-AWS_S3_REGION_NAME = env('AWS_S3_REGION_NAME', default='ap-northeast-2') # 예: 서울 리전
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
-AWS_S3_FILE_OVERWRITE = False
-AWS_DEFAULT_ACL = None
-AWS_S3_VERIFY = True # SSL 인증서 검증
+# AWS S3 Settings (주석 처리됨)
+# AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID', default='YOUR_AWS_ACCESS_KEY_ID')
+# AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY', default='YOUR_AWS_SECRET_ACCESS_KEY')
+# AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME', default='your-s3-bucket-name')
+# AWS_S3_REGION_NAME = env('AWS_S3_REGION_NAME', default='ap-northeast-2') # 예: 서울 리전
+# AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
+# AWS_S3_FILE_OVERWRITE = False
+# AWS_DEFAULT_ACL = None
+# AWS_S3_VERIFY = True # SSL 인증서 검증
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -81,10 +81,10 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files (User uploaded files)
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
-# CORS Headers for S3 direct upload
+# CORS Headers
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000", # 프론트엔드 개발 서버 주소
     "http://127.0.0.1:3000",

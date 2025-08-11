@@ -3,6 +3,8 @@ from django.contrib import admin
 from django.http import HttpResponse
 from django.http import HttpResponse
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from django.conf import settings # settings 임포트
 from django.conf.urls.static import static # static 함수 임포트
 
@@ -60,5 +62,9 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     path('users/', include('users.urls')),
     path('posts/', include('posts.urls')),
+    path('categories/', include('categories.urls')),
     path('products/', include('products.urls')),
-]
+    path('chat/', include('chat.urls')),
+
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

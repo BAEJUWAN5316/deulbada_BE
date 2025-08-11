@@ -4,23 +4,23 @@ from django.conf import settings
 from django.db.models import Q
 
 class UserManager(BaseUserManager):
-    def create_user(self, account_id, email, password=None, **extra_fields):
-        if not account_id:
-            raise ValueError('account_id는 필수입니다.')
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('이메일은 필수입니다.')
         email = self.normalize_email(email)
-        user = self.model(account_id=account_id, email=email, **extra_fields)
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
+        user.save(using=self._db)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, account_id, email, password=None, **extra_fields):
+    def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        return self.create_user(account_id, email, password, **extra_fields)
+        return self.create_user(email, password, **extra_fields)
+
 
 class User(AbstractBaseUser, PermissionsMixin):
-    account_id = models.CharField(max_length=30, unique=True)
-    username = models.CharField(max_length=30, unique=True)
     email = models.EmailField(unique=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -31,8 +31,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
     def __str__(self):
-        return self.account_id
+        return self.email
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -43,7 +47,7 @@ class UserProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.account_id}의 프로필"
+        return f"{self.user.email}의 프로필"
 
 class Report(models.Model):
     STATUS_CHOICES = [

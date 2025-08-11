@@ -1,30 +1,23 @@
-from rest_framework import generics, permissions
-from django_filters.rest_framework import DjangoFilterBackend
-from .models import Product
-from .serializers import ProductSerializer
-from .filters import ProductFilter
-# from core.permissions.is_owner import IsOwnerOrReadOnly # IsOwnerOrReadOnly import 제거
-from rest_framework.exceptions import PermissionDenied # PermissionDenied import 추가
+#view.py
 
-class ProductListCreateView(generics.ListCreateAPIView):
+from rest_framework import generics, permissions
+from products.models import Product
+from products.serializers import ProductSerializer
+
+# 상품 등록
+class ProductCreateView(generics.CreateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly] # 인증된 사용자만 생성 가능, 나머지는 읽기만 가능
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = ProductFilter
+    permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(seller=self.request.user)
+        serializer.save(user=self.request.user)
 
-class ProductRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+# 상품 수정/삭제
+class ProductDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly] # 인증된 사용자만 쓰기 가능, 나머지는 읽기만 가능
+    permission_classes = [permissions.IsAuthenticated]
 
-    def get_object(self):
-        obj = super().get_object()
-        # 요청 메서드가 쓰기(PUT, PATCH, DELETE)인 경우에만 소유자 확인
-        if self.request.method not in permissions.SAFE_METHODS:
-            if obj.seller != self.request.user:
-                raise PermissionDenied("이 상품에 대한 수정/삭제 권한이 없습니다.")
-        return obj
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)

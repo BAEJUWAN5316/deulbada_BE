@@ -1,6 +1,8 @@
 from django.contrib import admin
-from .models import Post, Like ,Comment # 예시
+from .models import Post
 
-admin.site.register(Post)
-admin.site.register(Like)
-admin.site.register(Comment) 
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    list_display = ('id', 'author', 'title', 'created_at')
+    search_fields = ('title', 'content')
+    list_filter = ('created_at',)

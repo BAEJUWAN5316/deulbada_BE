@@ -45,20 +45,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'rest_framework',  # DRF
+    
     'users',
     'posts',
-    'products',
-    'chat',
-    'categories',
-    # Third-party apps
-    'rest_framework_simplejwt',
-    'rest_framework', # Django REST Framework 추가
-    'django_filters', # django-filter 추가
-    'rest_framework_simplejwt', # Django REST Framework 추가
-    'corsheaders',    # django-cors-headers 추가
-    'channels', # Django Channels 추가
-    'drf_yasg', # drf-yasg 추가
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -95,8 +88,9 @@ TEMPLATES = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+    )
 }
+
 
 
 WSGI_APPLICATION = 'config.wsgi.application'

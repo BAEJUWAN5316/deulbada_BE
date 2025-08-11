@@ -12,7 +12,10 @@ class CategoryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAdminUser] # 관리자만 생성/수정/삭제 가능
 
-class CategoryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Category.objects.all()
+class SubCategoryListView(generics.ListAPIView):
     serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAdminUser] # 관리자만 생성/수정/삭제 가능
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        parent_id = self.kwargs['parent_id'] # Assuming parent_id is passed in URL
+        return Category.objects.filter(parent__id=parent_id)

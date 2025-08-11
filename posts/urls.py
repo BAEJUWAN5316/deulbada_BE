@@ -1,23 +1,19 @@
-# posts/urls.py
 from django.urls import path
-from .views import PostUpdateDeleteView
+from .views import (
+    PostListView, PostWriteView, PostDetailView, PostUpdateDeleteView,
+    PostImageDeleteView, PostLikeToggleView,
+    CommentCreateView, CommentUpdateDeleteView, CommentListView,
+)
 
 urlpatterns = [
-    path('<int:pk>/', PostUpdateDeleteView.as_view(), name='post-update-delete'),
-]
+    path("posts/", PostListView.as_view()),
+    path("new/", PostWriteView.as_view()),
+    path("posts/<int:id>/", PostDetailView.as_view()),
+    path("posts/<int:id>/edit/", PostUpdateDeleteView.as_view()),
+    path("posts/<int:post_id>/images/<int:image_id>/", PostImageDeleteView.as_view()),
+    path("posts/<int:post_id>/like/", PostLikeToggleView.as_view()),
 
-from django.urls import path
-from .views import PostListView, PostWriteView, PostLikeToggleView, CommentCreateView
-
-urlpatterns = [
-    # 전체 게시글 조회
-    path('', PostListView.as_view(), name='post-list'),
-
-    # 게시글 작성 (write)
-    path('write/', PostWriteView.as_view(), name='post-write'),
-
-    # 게시글 좋아요 / 좋아요 취소
-    path('<int:post_id>/like/', PostLikeToggleView.as_view(), name='post-like'),
-
-    path('<int:post_id>/comment/', CommentCreateView.as_view(), name='comment-create'),
+    path("posts/<int:post_id>/comments/", CommentListView.as_view()),
+    path("posts/<int:post_id>/comments/new/", CommentCreateView.as_view()),
+    path("comments/<int:id>/", CommentUpdateDeleteView.as_view()),
 ]

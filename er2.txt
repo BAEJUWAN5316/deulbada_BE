@@ -3,6 +3,11 @@ User 1:
   account_id: user_id_1
   username: user_name_1
   email: user1@example.com
+  bio: This is a bio for user 1.
+  profile_image: default_images/default_profile.jpg
+  is_profile_completed: True
+  is_farm_owner: False
+  is_farm_verified: False
   is_active: True
   is_staff: False
   date_joined: 2023-01-01T10:00:00Z
@@ -11,6 +16,11 @@ User 2:
   account_id: user_id_2
   username: user_name_2
   email: user2@example.com
+  bio: This is a bio for user 2.
+  profile_image: default_images/default_profile.jpg
+  is_profile_completed: True
+  is_farm_owner: True
+  is_farm_verified: False
   is_active: True
   is_staff: False
   date_joined: 2023-01-01T10:01:00Z
@@ -19,6 +29,11 @@ User 3:
   account_id: user_id_3
   username: user_name_3
   email: user3@example.com
+  bio: This is a bio for user 3.
+  profile_image: default_images/default_profile.jpg
+  is_profile_completed: True
+  is_farm_owner: False
+  is_farm_verified: True
   is_active: True
   is_staff: False
   date_joined: 2023-01-01T10:02:00Z
@@ -27,6 +42,11 @@ User 4:
   account_id: user_id_4
   username: user_name_4
   email: user4@example.com
+  bio: This is a bio for user 4.
+  profile_image: default_images/default_profile.jpg
+  is_profile_completed: True
+  is_farm_owner: True
+  is_farm_verified: True
   is_active: True
   is_staff: False
   date_joined: 2023-01-01T10:03:00Z
@@ -35,6 +55,11 @@ User 5:
   account_id: user_id_5
   username: user_name_5
   email: user5@example.com
+  bio: This is a bio for user 5.
+  profile_image: default_images/default_profile.jpg
+  is_profile_completed: True
+  is_farm_owner: False
+  is_farm_verified: False
   is_active: True
   is_staff: False
   date_joined: 2023-01-01T10:04:00Z
@@ -42,40 +67,40 @@ User 5:
 --- Dummy Data for UserProfile Model ---
 UserProfile 1:
   user: <FK_REFERENCE: User 1>
-  profile_image: http://43.201.70.73/media/dummy_image.jpg
-  bio: This is a bio for user 1.
+  profile_image: http://example.com/media/user_profile_1.jpg
+  bio: This is a detailed bio for user 1.
   is_farm_owner: False
   is_farm_verified: False
   created_at: 2023-01-01T10:05:00Z
 
 UserProfile 2:
   user: <FK_REFERENCE: User 2>
-  profile_image: http://43.201.70.73/media/dummy_image.jpg
-  bio: This is a bio for user 2.
+  profile_image: http://example.com/media/user_profile_2.jpg
+  bio: This is a detailed bio for user 2, a farm owner.
   is_farm_owner: True
   is_farm_verified: False
   created_at: 2023-01-01T10:06:00Z
 
 UserProfile 3:
   user: <FK_REFERENCE: User 3>
-  profile_image: http://43.201.70.73/media/dummy_image.jpg
-  bio: This is a bio for user 3.
+  profile_image: http://example.com/media/user_profile_3.jpg
+  bio: This is a detailed bio for user 3, a verified farm owner.
   is_farm_owner: False
   is_farm_verified: True
   created_at: 2023-01-01T10:07:00Z
 
 UserProfile 4:
   user: <FK_REFERENCE: User 4>
-  profile_image: http://43.201.70.73/media/dummy_image.jpg
-  bio: This is a bio for user 4.
+  profile_image: http://example.com/media/user_profile_4.jpg
+  bio: This is a detailed bio for user 4, a verified farm owner.
   is_farm_owner: True
   is_farm_verified: True
   created_at: 2023-01-01T10:08:00Z
 
 UserProfile 5:
   user: <FK_REFERENCE: User 5>
-  profile_image: http://43.201.70.73/media/dummy_image.jpg
-  bio: This is a bio for user 5.
+  profile_image: http://example.com/media/user_profile_5.jpg
+  bio: This is a detailed bio for user 5.
   is_farm_owner: False
   is_farm_verified: False
   created_at: 2023-01-01T10:09:00Z
@@ -116,45 +141,60 @@ Report 5:
   status: pending
   created_at: 2023-01-01T10:14:00Z
 
-
-
-
-
 --- Dummy Data for Category Model ---
 Category 1:
   name: 잎채소류
   type: agricultural
-  icon_image: http://43.201.70.73/media/dummy_image.jpg
-  parent: None
+  icon_image: http://example.com/media/category_leafy.jpg
   created_at: 2023-01-01T09:00:00Z
 
 Category 2:
   name: 생선류
   type: fishing
-  icon_image: http://43.201.70.73/media/dummy_image.jpg
-  parent: None
+  icon_image: http://example.com/media/category_fish.jpg
   created_at: 2023-01-01T09:01:00Z
 
 Category 3:
   name: 열매채소류
   type: agricultural
-  icon_image: http://43.201.70.73/media/dummy_image.jpg
-  parent: None
+  icon_image: http://example.com/media/category_fruit.jpg
   created_at: 2023-01-01T09:02:00Z
 
 Category 4:
   name: 갑각류
   type: fishing
-  icon_image: http://43.201.70.73/media/dummy_image.jpg
-  parent: None
+  icon_image: http://example.com/media/category_crustacean.jpg
   created_at: 2023-01-01T09:03:00Z
 
 Category 5:
   name: 뿌리채소류
   type: agricultural
-  icon_image: http://43.201.70.73/media/dummy_image.jpg
-  parent: None
+  icon_image: http://example.com/media/category_root.jpg
   created_at: 2023-01-01T09:04:00Z
+
+Category 6:
+  name: 과일류
+  type: agricultural
+  icon_image: http://example.com/media/category_fruit_new.jpg
+  created_at: 2023-01-01T09:05:00Z
+
+Category 7:
+  name: 곡류·잡곡
+  type: agricultural
+  icon_image: http://example.com/media/category_grain.jpg
+  created_at: 2023-01-01T09:06:00Z
+
+Category 8:
+  name: 조개류
+  type: fishing
+  icon_image: http://example.com/media/category_shellfish.jpg
+  created_at: 2023-01-01T09:07:00Z
+
+Category 9:
+  name: 연체류
+  type: fishing
+  icon_image: http://example.com/media/category_mollusk.jpg
+  created_at: 2023-01-01T09:08:00Z
 
 --- Dummy Data for ChatRoom Model ---
 ChatRoom 1:
@@ -211,7 +251,7 @@ Message 4:
   room: <FK_REFERENCE: ChatRoom 3>
   sender: <FK_REFERENCE: User 2>
   content: Checking in about the product.
-  image_url: http://43.201.70.73/media/dummy_image.jpg
+  image_url: http://example.com/media/message_image_1.jpg
   is_read: True
   created_at: 2023-01-08T09:08:00Z
 
@@ -226,32 +266,37 @@ Message 5:
 --- Dummy Data for Post Model ---
 Post 1:
   author: <FK_REFERENCE: User 1>
+  title: My First Post
   content: This is my first post! Hello everyone.
-  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
+  image_urls: ["http://example.com/media/post_image_1.jpg"]
   created_at: 2023-01-05T10:00:00Z
 
 Post 2:
   author: <FK_REFERENCE: User 2>
+  title: Organic Vegetables from My Farm
   content: Check out these amazing organic vegetables from my farm!
-  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
+  image_urls: ["http://example.com/media/post_image_2.jpg"]
   created_at: 2023-01-05T10:01:00Z
 
 Post 3:
   author: <FK_REFERENCE: User 3>
+  title: Beautiful Weather Today
   content: Enjoying the beautiful weather today.
   image_urls: []
   created_at: 2023-01-05T10:02:00Z
 
 Post 4:
   author: <FK_REFERENCE: User 4>
+  title: New Harvest Ready!
   content: New harvest is ready!
-  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
+  image_urls: ["http://example.com/media/post_image_3.jpg"]
   created_at: 2023-01-05T10:03:00Z
 
 Post 5:
   author: <FK_REFERENCE: User 5>
+  title: A Day on the Farm
   content: A day on the farm.
-  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
+  image_urls: ["http://example.com/media/post_image_4.jpg"]
   created_at: 2023-01-05T10:04:00Z
 
 --- Dummy Data for Like Model ---
@@ -322,12 +367,14 @@ Product 1:
   name: Organic Apples
   description: Fresh organic apples from our farm.
   price: 5000
-  stock: 100
-  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
+  is_sold: False
+  image_urls: ["http://example.com/media/product_apple.jpg"]
   variety: Fuji
   region: Gangwon
   harvest_date: 2023-09-15
-  product_url: https://example.com/products/organic-apples
+  sales_link: https://example.com/products/organic-apples
+  tags: apple, organic, fruit
+  category: 잎채소류 # New field
   created_at: 2023-10-01T10:00:00Z
 
 Product 2:
@@ -335,12 +382,14 @@ Product 2:
   name: Fresh Carrots
   description: Locally grown fresh carrots.
   price: 3000
-  stock: 200
-  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
+  is_sold: False
+  image_urls: ["http://example.com/media/product_carrot.jpg"]
   variety: Danvers
   region: Gyeonggi
   harvest_date: 2023-10-01
-  product_url: https://example.com/products/fresh-carrots
+  sales_link: https://example.com/products/fresh-carrots
+  tags: carrot, vegetable, organic
+  category: 뿌리채소류 # New field
   created_at: 2023-10-01T10:01:00Z
 
 Product 3:
@@ -348,12 +397,14 @@ Product 3:
   name: Sweet Potatoes
   description: Delicious sweet potatoes.
   price: 4500
-  stock: 150
-  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
+  is_sold: False
+  image_urls: ["http://example.com/media/product_sweetpotato.jpg"]
   variety: Honey
   region: Jeolla
   harvest_date: 2023-09-20
-  product_url: https://example.com/products/sweet-potatoes
+  sales_link: https://example.com/products/sweet-potatoes
+  tags: sweet potato, root, vegetable
+  category: 뿌리채소류 # New field
   created_at: 2023-10-01T10:02:00Z
 
 Product 4:
@@ -361,12 +412,14 @@ Product 4:
   name: Farm Fresh Eggs
   description: Eggs from happy chickens.
   price: 7000
-  stock: 50
-  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
+  is_sold: False
+  image_urls: ["http://example.com/media/product_egg.jpg"]
   variety: Large
   region: Chungcheong
   harvest_date: 2023-10-10
-  product_url: https://example.com/products/farm-fresh-eggs
+  sales_link: https://example.com/products/farm-fresh-eggs
+  tags: egg, poultry, fresh
+  category: 기타농산물 # New field
   created_at: 2023-10-01T10:03:00Z
 
 Product 5:
@@ -374,12 +427,14 @@ Product 5:
   name: Organic Milk
   description: Fresh organic milk.
   price: 8000
-  stock: 30
-  image_urls: ["http://43.201.70.73/media/dummy_image.jpg"]
+  is_sold: False
+  image_urls: ["http://example.com/media/product_milk.jpg"]
   variety: Whole
   region: Gyeongsang
   harvest_date: None
-  product_url: https://example.com/products/organic-milk
+  sales_link: https://example.com/products/organic-milk
+  tags: milk, dairy, organic
+  category: 기타농산물 # New field
   created_at: 2023-10-01T10:04:00Z
 
 --- Dummy Data for ProductCategory Model ---
@@ -402,3 +457,29 @@ ProductCategory 4:
 ProductCategory 5:
   product: <FK_REFERENCE: Product 5>
   category: <FK_REFERENCE: Category 2>
+
+--- Dummy Data for Follow Model ---
+Follow 1:
+  follower: <FK_REFERENCE: User 1>
+  following: <FK_REFERENCE: User 2>
+  created_at: 2023-01-01T11:00:00Z
+
+Follow 2:
+  follower: <FK_REFERENCE: User 1>
+  following: <FK_REFERENCE: User 3>
+  created_at: 2023-01-01T11:01:00Z
+
+Follow 3:
+  follower: <FK_REFERENCE: User 2>
+  following: <FK_REFERENCE: User 1>
+  created_at: 2023-01-01T11:02:00Z
+
+Follow 4:
+  follower: <FK_REFERENCE: User 3>
+  following: <FK_REFERENCE: User 1>
+  created_at: 2023-01-01T11:03:00Z
+
+Follow 5:
+  follower: <FK_REFERENCE: User 4>
+  following: <FK_REFERENCE: User 2>
+  created_at: 2023-01-01T11:04:00Z

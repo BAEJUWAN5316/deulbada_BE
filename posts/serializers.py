@@ -1,51 +1,103 @@
+from django.contrib.auth import get_user_model
+from django.db.models import Count, F
 from rest_framework import serializers
-from .models import Post, Comment
+from .models import Post, PostImage, Comment
 
-# 게시글 목록 조회용
-class PostListSerializer(serializers.ModelSerializer):
-    account_id = serializers.CharField(source='author.account_id')
-    username = serializers.CharField(source='author.username')
-    profile_image = serializers.URLField(source='author.profile.profile_image')
+User = get_user_model()
 
+class AuthorMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id","account_id","username","profile_image","is_farm_verified"]
+
+class PostImageSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+    class Meta:
+        model = PostImage
+        fields = ["id","url","created_at"]
+    def get_url(self, obj):
+        return getattr(obj.image, "url", None)
+
+class _ImagesMixin(serializers.ModelSerializer):
+    image_urls = serializers.SerializerMethodField()
+    def get_image_urls(self, obj):
+        urls = []
+        if getattr(obj, "image", None):
+            try: urls.append(obj.image.url)
+            except Exception: pass
+        for p in obj.images.all():
+            try: urls.append(p.image.url)
+            except Exception: pass
+        return list(dict.fromkeys(urls))
+
+class PostListSerializer(_ImagesMixin):
+    author = AuthorMiniSerializer(read_only=True)
+    like_count = serializers.IntegerField(read_only=True)
+    comment_count = serializers.IntegerField(read_only=True)
+    author_is_farm_verified = serializers.BooleanField(read_only=True)
     class Meta:
         model = Post
-        fields = ['id', 'account_id', 'username', 'profile_image', 'content', 'image_urls', 'created_at']
+        fields = ["id","author","title","content","created_at",
+                  "like_count","comment_count","author_is_farm_verified","image_urls"]
 
-# 게시글 작성용 (write)
+class PostDetailSerializer(PostListSerializer):
+    images = PostImageSerializer(many=True, read_only=True)
+    class Meta(PostListSerializer.Meta):
+        fields = PostListSerializer.Meta.fields + ["images"]
+
 class PostWriteSerializer(serializers.ModelSerializer):
-    author = serializers.CharField(source='author.username', read_only=True)
-    image_urls = serializers.ListField(
-        child=serializers.URLField(), required=False, default=list
+    images_add = serializers.ListField(
+        child=serializers.ImageField(allow_empty_file=False, use_url=False), write_only=True, required=False
+    )
+    image_ids_delete = serializers.ListField(
+        child=serializers.IntegerField(min_value=1), write_only=True, required=False
     )
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'content', 'image_urls']
+        fields = ["title","content","image","images_add","image_ids_delete"]
 
-# 게시글 상세 조회용
-class PostDetailSerializer(serializers.ModelSerializer):
-    account_id = serializers.CharField(source='author.account_id')
-    username = serializers.CharField(source='author.username')
-    profile_image = serializers.URLField(source='author.profile.profile_image')
+    def validate(self, attrs):
+        add_list = self._get_add_list(attrs)
+        del_list = self._get_del_list(attrs)
+        if self.instance:
+            current = (1 if self.instance.image else 0) + self.instance.images.count()
+        else:
+            current = 0
+        incoming_single = 1 if attrs.get("image") else 0
+        remaining = max(0, current - len(del_list))
+        total_after = remaining + incoming_single + len(add_list)
+        if total_after > 5:
+            raise serializers.ValidationError("이미지는 최대 5장까지 업로드 가능합니다.")
+        return attrs
 
-    class Meta:
-        model = Post
-        fields = ['id', 'account_id', 'username', 'profile_image', 'content', 'image_urls', 'created_at']
+    def create(self, data):
+        add = self._get_add_list(data, pop=True)
+        post = Post.objects.create(**data)
+        self._bulk_create_images(post, add)
+        return post
 
-# 댓글/대댓글 공용 시리얼라이저
+    def update(self, inst, data):
+        add = self._get_add_list(data, pop=True)
+        dels = self._get_del_list(data, pop=True)
+        for k,v in data.items(): setattr(inst, k, v)
+        inst.save()
+        if dels: PostImage.objects.filter(post=inst, id__in=dels).delete()
+        self._bulk_create_images(inst, add)
+        return inst
+
+    def _get_add_list(self, data, pop=False):
+        return (data.pop("images_add", []) if pop else data.get("images_add", [])) or []
+    def _get_del_list(self, data, pop=False):
+        return (data.pop("image_ids_delete", []) if pop else data.get("image_ids_delete", [])) or []
+    def _bulk_create_images(self, post, files):
+        if files:
+            PostImage.objects.bulk_create([PostImage(post=post, image=f) for f in files])
+
 class CommentSerializer(serializers.ModelSerializer):
-    user = serializers.CharField(source='user.username', read_only=True)
-    parent_id = serializers.IntegerField(write_only=True, required=False)
-
+    user = AuthorMiniSerializer(read_only=True)
+    reply_count = serializers.IntegerField(read_only=True)
     class Meta:
         model = Comment
-        fields = ['id', 'user', 'content', 'post', 'parent_id', 'created_at']
-        read_only_fields = ['id', 'user', 'created_at']
-# posts/serializers.py
-from rest_framework import serializers
-from .models import Post
-
-class PostSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Post
-        fields = ['id', 'title', 'content', 'created_at']
+        fields = ["id","post","user","content","parent","created_at","reply_count"]
+        read_only_fields = ["post","user","reply_count"]

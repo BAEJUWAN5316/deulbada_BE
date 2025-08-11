@@ -60,7 +60,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'channels',
     'drf_yasg',
-    'mptt',
     # 'storages', # S3 스토리지를 위해 추가
 ]
 
@@ -169,30 +168,16 @@ REST_FRAMEWORK = {
 
 
 WSGI_APPLICATION = 'config.wsgi.application'
-AUTH_USER_MODEL = 'users.User' 
 
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-}
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-
 DATABASES = {
-    'default': env.db(),
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
-AUTH_USER_MODEL = 'users.User'
-AUTH_USER_MODEL = 'users.User'
 
 
 # Password validation
@@ -225,15 +210,11 @@ USE_I18N = True
 
 USE_TZ = True
 
-AUTH_USER_MODEL = 'users.User'
-
 
 
 
 # Channels
 ASGI_APPLICATION = 'config.asgi.application'
-
-AUTH_USER_MODEL = 'users.User'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -278,3 +259,5 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
+
+AUTH_USER_MODEL = 'users.User'

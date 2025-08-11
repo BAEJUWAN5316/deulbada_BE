@@ -1,15 +1,10 @@
-# products/admin.py
-
 from django.contrib import admin
-from .models import Product
+from .models import Product # Removed ProductCategory
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'seller', 'price', 'is_sold', 'created_at')
-    search_fields = ('title', 'description')
-    list_filter = ('is_sold', 'created_at')
+    list_display = ('id', 'seller', 'name', 'price', 'created_at')
+    search_fields = ('name', 'description')
+    list_filter = ('created_at',)
 
-from .models import Product, ProductCategory
-
-admin.site.register(Product)
-admin.site.register(ProductCategory)
+# admin.site.register(ProductCategory) # Removed

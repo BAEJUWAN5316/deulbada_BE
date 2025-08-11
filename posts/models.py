@@ -1,47 +1,35 @@
-# posts/models.py
-
-# posts/models.py
+from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
-from django.contrib.auth import get_user_model
-User = get_user_model()
+
+def validate_image_size(image):
+    max_size = 5 * 1024 * 1024
+    if image and hasattr(image, "size") and image.size > max_size:
+        raise ValidationError("이미지 크기는 5MB를 초과할 수 없습니다.")
 
 class Post(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
-    image_urls = models.JSONField(blank=True, null=True)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="posts")
+    title = models.CharField(max_length=100, blank=True)
+    content = models.TextField(blank=True)
+    image = models.ImageField(upload_to="post_images/", blank=True, null=True, validators=[validate_image_size])  # 레거시 1장
     created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self): return f"Post {self.id} by {self.author_id}"
 
-    def __str__(self):
-        return f"{self.author.username}의 게시글"
-
-class Like(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+class PostImage(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(upload_to="post_images/", validators=[validate_image_size])
     created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('user', 'post')
-
-    def __str__(self):
-        return f"{self.user.username} → Post {self.post.id}"
 
 class Comment(models.Model):
-    post = models.ForeignKey('Post', on_delete=models.CASCADE, related_name='comments')
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
-    
-    # 대댓글 (부모 댓글 연결)
-    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
-    
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    content = models.TextField(blank=True)
+    parent = models.ForeignKey("self", null=True, blank=True, related_name="replies", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.user.username}의 댓글: {self.content[:20]}"
-from django.db import models
-from django.conf import settings
-
-class Post(models.Model):
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='posts', on_delete=models.CASCADE)
-    title = models.CharField(max_length=100)
-    content = models.TextField()
+class Like(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="likes")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["post","user"], name="uq_like_post_user")]

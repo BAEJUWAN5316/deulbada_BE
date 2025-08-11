@@ -1,79 +1,81 @@
+# users/admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User
+from .models import User, UserProfile, Follow, Report
+
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    fieldsets = BaseUserAdmin.fieldsets + (
-        ('추가 정보', {
-            'fields': ('nickname', 'profile_image', 'introduction', 'followers')
-        }),
+    # 목록
+    list_display = (
+        'id', 'email', 'account_id', 'username', 'nickname',
+        'is_farm_owner', 'is_farm_verified', 'is_staff'
     )
-    list_display = ('username', 'nickname', 'email', 'is_staff')
-    search_fields = ('username', 'nickname', 'email')
-
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.utils.translation import gettext_lazy as _
-from .models import User
-
-
-@admin.register(User)
-class UserAdmin(BaseUserAdmin):
-    list_display = ('id', 'email', 'is_active', 'is_staff')
-    search_fields = ('email',)
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'is_farm_owner', 'is_farm_verified')
+    search_fields = ('email', 'account_id', 'username', 'nickname')
     ordering = ('-id',)
+    date_hierarchy = 'date_joined'
 
+    # 폼
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        (_('권한'), {
-            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+        ('Profile', {
+            'fields': (
+                'account_id', 'username', 'nickname', 'introduction', 'profile_image',
+                'is_profile_completed', 'is_farm_owner', 'is_farm_verified'
+            )
         }),
-        (_('마지막 로그인'), {'fields': ('last_login',)}),
+        ('Permissions', {
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')
+        }),
+        ('Important dates', {
+            'fields': ('last_login', 'date_joined', 'created_at', 'updated_at')
+        }),
     )
-
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'password1', 'password2'),
+            'fields': ('email', 'account_id', 'username', 'password1', 'password2'),
         }),
     )
-
     filter_horizontal = ('groups', 'user_permissions')
 
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, UserProfile
+    # 읽기전용
+    readonly_fields = ('last_login', 'date_joined', 'created_at', 'updated_at')
 
-
-class UserAdmin(BaseUserAdmin):
-    model = User
-
-
-admin.site.register(User, UserAdmin)
-admin.site.register(UserProfile)
-
-from .models import User, UserProfile, Report
-
-@admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    list_display = ('id', 'account_id', 'username', 'email')
-    search_fields = ('account_id', 'username', 'email')
-    list_filter = ('is_staff', 'is_superuser')
-    ordering = ('-date_joined',)
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'is_farm_owner', 'is_farm_verified')
-    search_fields = ('user__account_id',)
+    list_display = (
+        'id', 'user', 'is_farm_owner', 'is_farm_verified',
+        'ceo_name', 'phone', 'business_number',
+        'address_postcode', 'created_at'
+    )
     list_filter = ('is_farm_owner', 'is_farm_verified')
-    ordering = ('-created_at',)
+    search_fields = ('user__email', 'user__account_id', 'user__username', 'ceo_name', 'business_number')
+    autocomplete_fields = ('user',)
+    readonly_fields = ('created_at',)
+
+
+@admin.register(Follow)
+class FollowAdmin(admin.ModelAdmin):
+    list_display = ('id', 'follower', 'following', 'created_at')
+    search_fields = ('follower__email', 'follower__account_id', 'following__email', 'following__account_id')
+    list_select_related = ('follower', 'following')
+    raw_id_fields = ('follower', 'following')
+    readonly_fields = ('created_at',)
+
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ('id', 'reporter', 'target_user', 'status', 'created_at')
-    search_fields = ('reporter__username', 'target_user__username')
-    ordering = ('-created_at',)
-    list_editable = ('status',)
+    list_display = ('id', 'reporter', 'target_user', 'status', 'reason_short', 'created_at')
+    list_filter = ('status',)
+    search_fields = ('reporter__email', 'reporter__account_id', 'target_user__email', 'target_user__account_id', 'reason')
+    list_select_related = ('reporter', 'target_user')
+    readonly_fields = ('created_at',)
 
+    @admin.display(description='신고 사유')
     def reason_short(self, obj):
-        return obj.reason[:30] + '...' if len(obj.reason) > 30 else obj.reason
-    reason_short.short_description = '신고 사유'
+        if not obj.reason:
+            return ''
+        return (obj.reason[:30] + '...') if len(obj.reason) > 30 else obj.reason

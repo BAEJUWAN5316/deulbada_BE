@@ -1,33 +1,33 @@
-# users/urls.py
-
-# users/urls.py
 from django.urls import path
-from .views import ProfileView
-from .views import CustomTokenObtainPairView
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
-    ProfileRetrieveView,
-    FollowersListView,
-    FollowingListView,
-    FollowToggleView,
+    SignupView, ProducerSignupView, CustomTokenObtainPairView,
+    EmailCheckView, AccountIdCheckView,
+    MyProfileView, ProfileSetupView, ProfileUpdateView, FarmOwnerProfileView,
+    ProfileRetrieveView, FollowersListView, FollowingListView, FollowToggleView,
+    UserSearchAPIView, MyPostsView, ReportCreateAPIView,
 )
-from .views import UserSearchAPIView, MyPostsView, ReportCreateAPIView
-from .views import SignupView, EmailCheckView
 
 urlpatterns = [
-    path('signup/', SignupView.as_view(), name='signup'),
-    path('check-email/', EmailCheckView.as_view(), name='check-email'),  # api 이메일 중복 
+    path("signup/", SignupView.as_view()),
+    path("signup/producer/", ProducerSignupView.as_view()),
+    path("login/", CustomTokenObtainPairView.as_view()),
+    path("token/refresh/", TokenRefreshView.as_view()),
 
+    path("check-email/", EmailCheckView.as_view()),
+    path("check-account-id/", AccountIdCheckView.as_view()),
 
-    path('profiles/<str:account_id>/', ProfileRetrieveView.as_view(), name='profile-detail'),
-    path('profiles/<str:account_id>/followers/', FollowersListView.as_view(), name='profile-followers'),
-    path('profiles/<str:account_id>/following/', FollowingListView.as_view(), name='profile-following'),
-    path('profiles/<str:account_id>/follow/', FollowToggleView.as_view(), name='profile-follow-toggle'),
-    path('search/', UserSearchAPIView.as_view(), name='user-search'),
-    path('myposts/', MyPostsView.as_view(), name='user-myposts'),
-    path('report/', ReportCreateAPIView.as_view(), name='user-report'),
+    path("mypage/", MyProfileView.as_view()),
+    path("mypage/profile/setup/", ProfileSetupView.as_view()),
+    path("mypage/profile/", ProfileUpdateView.as_view()),
+    path("mypage/farm/", FarmOwnerProfileView.as_view()),
 
-    path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('mypage/', MyProfileView.as_view(), name='my-profile'),
+    path("profiles/<str:account_id>/", ProfileRetrieveView.as_view()),
+    path("profiles/<str:account_id>/followers/", FollowersListView.as_view()),
+    path("profiles/<str:account_id>/following/", FollowingListView.as_view()),
+    path("profiles/<str:account_id>/follow/", FollowToggleView.as_view()),
+
+    path("search/", UserSearchAPIView.as_view()),
+    path("myposts/", MyPostsView.as_view()),
+    path("report/", ReportCreateAPIView.as_view()),
 ]

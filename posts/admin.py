@@ -1,19 +1,11 @@
-# posts/admin.py
 from django.contrib import admin
-from .models import Post
+from .models import Post, Comment, Like
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ('id', 'author', 'title', 'created_at')
+    list_display = ('id', 'author', 'title', 'created_at')  # title도 포함
     search_fields = ('title', 'content')
     list_filter = ('created_at',)
-
-
-from .models import Post, Comment, Like  # 필요한 모델들 import
-
-@admin.register(Post)
-class PostAdmin(admin.ModelAdmin):
-    list_display = ['id', 'author', 'created_at']  # 'title' 제거
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):

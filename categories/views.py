@@ -3,19 +3,20 @@ from .models import Category
 from .serializers import CategorySerializer
 
 class CategoryListCreateView(generics.ListCreateAPIView):
-    queryset = Category.objects.filter(parent__isnull=True) # 최상위 카테고리만 조회
+    queryset = Category.objects.all() # No parent__isnull filter needed for flat categories
     serializer_class = CategorySerializer
-    permission_classes = [permissions.AllowAny] # 모든 사용자가 조회 가능
+    permission_classes = [permissions.AllowAny]
 
 class CategoryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [permissions.IsAdminUser] # 관리자만 생성/수정/삭제 가능
+    permission_classes = [permissions.IsAdminUser]
 
-class SubCategoryListView(generics.ListAPIView):
-    serializer_class = CategorySerializer
-    permission_classes = [permissions.AllowAny]
-
-    def get_queryset(self):
-        parent_id = self.kwargs['parent_id'] # Assuming parent_id is passed in URL
-        return Category.objects.filter(parent__id=parent_id)
+# SubCategoryListView is no longer needed
+# class SubCategoryListView(generics.ListAPIView):
+#     serializer_class = CategorySerializer
+#     permission_classes = [permissions.AllowAny]
+#
+#     def get_queryset(self):
+#         parent_id = self.kwargs['parent_id']
+#         return Category.objects.filter(parent__id=parent_id)

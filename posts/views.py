@@ -1,127 +1,151 @@
-# posts/views.py
-from rest_framework import generics, permissions
-from .models import Post
-from .serializers import PostSerializer
-
-class PostUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Post.objects.all()
-    serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return Post.objects.filter(author=self.request.user)
-from rest_framework import generics, status
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
-from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
-from .models import Post, Like, Comment
-from .serializers import (
-    PostListSerializer,
-    PostWriteSerializer,
-    CommentSerializer,
-    PostDetailSerializer
-)
+from django.contrib.auth import get_user_model
+from django.db.models import Count, F, Q
 from django.shortcuts import get_object_or_404
 
-# 🔹 전체 게시글 목록 조회
-class PostListView(generics.ListAPIView):
-    queryset = Post.objects.all().order_by('-created_at')
-    serializer_class = PostListSerializer
+from rest_framework import generics, permissions, status
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.pagination import PageNumberPagination
 
-# 🔹 게시글 작성 (write)
+from .models import Post, Like, Comment, PostImage
+from .serializers import (
+    PostListSerializer, PostWriteSerializer, PostDetailSerializer, CommentSerializer
+)
+
+User = get_user_model()
+
+class SmallPagination(PageNumberPagination):
+    page_size_query_param = "page_size"
+    max_page_size = 50
+
+def _truthy(v): return str(v).lower() in {"1","true","t","yes","y","on"}
+
+# 목록 (페이지네이션 + 유저/사진 필터 + 집계)
+class PostListView(generics.ListAPIView):
+    serializer_class = PostListSerializer
+    permission_classes = [permissions.AllowAny]
+    pagination_class = SmallPagination
+
+    def get_queryset(self):
+        qs = (Post.objects.select_related("author").prefetch_related("images")
+              .annotate(like_count=Count("likes", distinct=True),
+                        comment_count=Count("comments", distinct=True),
+                        author_is_farm_verified=F("author__is_farm_verified"))
+              .order_by("-created_at"))
+        user_key = self.request.query_params.get("user")
+        if user_key:
+            if str(user_key).isdigit():
+                user = User.objects.filter(Q(id=user_key) | Q(account_id__iexact=user_key)).first()
+            else:
+                user = User.objects.filter(Q(account_id__iexact=user_key) | Q(username__iexact=user_key)).first()
+            qs = qs.filter(author=user) if user else Post.objects.none()
+        if _truthy(self.request.query_params.get("photos","")):
+            qs = qs.filter(Q(image__isnull=False) | Q(images__isnull=False)).distinct()
+        return qs
+
+# 작성 (멀티파트)
 class PostWriteView(generics.CreateAPIView):
     serializer_class = PostWriteSerializer
     permission_classes = [IsAuthenticated]
-
+    parser_classes = (MultiPartParser, FormParser)
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-# 🔹 게시글 상세 조회
+# 상세 (집계 포함)
 class PostDetailView(generics.RetrieveAPIView):
-    queryset = Post.objects.all()
     serializer_class = PostDetailSerializer
-    lookup_field = 'id'
+    permission_classes = [permissions.AllowAny]
+    lookup_field = "id"
+    def get_queryset(self):
+        return (Post.objects.select_related("author").prefetch_related("images")
+                .annotate(like_count=Count("likes", distinct=True),
+                          comment_count=Count("comments", distinct=True),
+                          author_is_farm_verified=F("author__is_farm_verified")))
 
-# 🔹 게시글 수정 / 삭제
+# 수정/삭제 (작성자만)
 class PostUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Post.objects.all()
     serializer_class = PostWriteSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
-    lookup_field = 'id'
-
+    parser_classes = (MultiPartParser, FormParser)
+    lookup_field = "id"
+    def get_queryset(self):
+        return Post.objects.all().prefetch_related("images")
     def perform_update(self, serializer):
         post = self.get_object()
         if post.author != self.request.user:
-            raise PermissionDenied("작성자만 수정 가능")
+            raise PermissionDenied("작성자만 수정 가능합니다.")
         serializer.save()
-
     def perform_destroy(self, instance):
         if instance.author != self.request.user:
-            raise PermissionDenied("작성자만 삭제 가능")
+            raise PermissionDenied("작성자만 삭제 가능합니다.")
         instance.delete()
 
-# 🔹 게시글 좋아요/취소 토글
+# 개별 이미지 삭제 (X 버튼)
+class PostImageDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self, request, post_id, image_id):
+        img = get_object_or_404(PostImage, id=image_id, post_id=post_id)
+        if img.post.author != request.user:
+            raise PermissionDenied("작성자만 삭제 가능합니다.")
+        img.delete()
+        return Response(status=204)
+
+# 좋아요 토글
 class PostLikeToggleView(APIView):
     permission_classes = [IsAuthenticated]
-
     def post(self, request, post_id):
         post = get_object_or_404(Post, id=post_id)
         like, created = Like.objects.get_or_create(user=request.user, post=post)
+        if created: return Response({"message":"좋아요 완료","post_id":post.id}, status=status.HTTP_201_CREATED)
+        like.delete(); return Response({"message":"좋아요 취소","post_id":post.id})
 
-        if created:
-            return Response({"message": "좋아요 완료", "post_id": post.id}, status=status.HTTP_201_CREATED)
-        else:
-            like.delete()
-            return Response({"message": "좋아요 취소", "post_id": post.id}, status=status.HTTP_200_OK)
-
-# 🔹 댓글/대댓글 작성
+# 댓글 생성(대댓글 포함)
 class CommentCreateView(APIView):
     permission_classes = [IsAuthenticated]
-
     def post(self, request, post_id):
         post = get_object_or_404(Post, id=post_id)
-        content = request.data.get('content')
-        parent_id = request.data.get('parent_id')
-
+        content = request.data.get("content")
+        parent_id = request.data.get("parent_id")
         if not content:
-            return Response({"error": "내용이 비어있습니다."}, status=400)
-
-        comment = Comment(post=post, user=request.user, content=content)
-
+            return Response({"error":"내용이 비어있습니다."}, status=400)
+        c = Comment(post=post, user=request.user, content=content)
         if parent_id:
-            parent_comment = Comment.objects.filter(id=parent_id, post=post).first()
-            if not parent_comment:
-                return Response({"error": "부모 댓글 없음"}, status=404)
-            comment.parent = parent_comment
+            parent = Comment.objects.filter(id=parent_id, post=post).first()
+            if not parent:
+                return Response({"error":"부모 댓글 없음"}, status=404)
+            c.parent = parent
+        c.save()
+        # reply_count annotate
+        c.reply_count = c.replies.count()
+        return Response(CommentSerializer(c).data, status=201)
 
-        comment.save()
-        serializer = CommentSerializer(comment)
-        return Response(serializer.data, status=201)
-
-# 🔹 댓글 수정 / 삭제
+# 댓글 수정/삭제
 class CommentUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
-    lookup_field = 'id'
-
+    lookup_field = "id"
     def perform_update(self, serializer):
-        comment = self.get_object()
-        if comment.user != self.request.user:
+        c = self.get_object()
+        if c.user != self.request.user:
             raise PermissionDenied("작성자만 수정 가능")
         serializer.save()
-
     def perform_destroy(self, instance):
-        post_owner = instance.post.author
-        if instance.user != self.request.user and post_owner != self.request.user:
+        owner = instance.post.author
+        if instance.user != self.request.user and owner != self.request.user:
             raise PermissionDenied("작성자 또는 게시글 작성자만 삭제 가능")
         instance.delete()
 
-# 🔹 게시글에 달린 댓글 목록 조회 (페이징)
+# 특정 게시글의 댓글 목록(부모 댓글만) — 페이지네이션
 class CommentListView(generics.ListAPIView):
     serializer_class = CommentSerializer
-
+    permission_classes = [permissions.AllowAny]
+    pagination_class = SmallPagination
     def get_queryset(self):
-        post_id = self.kwargs.get('post_id')
-        return Comment.objects.filter(post_id=post_id, parent__isnull=True).order_by('-created_at')
+        post_id = self.kwargs.get("post_id")
+        return (Comment.objects.filter(post_id=post_id, parent__isnull=True)
+                .annotate(reply_count=Count("replies", distinct=True))
+                .order_by("-created_at"))

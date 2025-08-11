@@ -46,8 +46,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    'rest_framework',  # DRF
     
     'users',
     'categories',
@@ -92,7 +90,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     'https://deulbada.netlify.app', 
     'http://deulbada.netlify.app', 
-    'netlify.app',
+    # 'netlify.app',
     # 여기에 실제 프론트엔드 배포 도메인을 추가해야 합니다.
 ]
 CORS_ALLOW_METHODS = [

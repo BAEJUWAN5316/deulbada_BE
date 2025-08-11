@@ -1,3 +1,4 @@
+# chat/serializers.py
 from rest_framework import serializers
 from django.conf import settings
 from .models import ChatRoom, Message
@@ -14,9 +15,9 @@ class MessageSerializer(serializers.ModelSerializer):
         read_only_fields = ['sender', 'room', 'created_at']
 
 class ChatRoomSerializer(serializers.ModelSerializer):
-    user1_info = UserSerializer(source='user1', read_only=True)
-    user2_info = UserSerializer(source='user2', read_only=True)
-    messages = MessageSerializer(many=True, read_only=True)
+    # 유저 정보는 중첩 직렬화 대신 PK만 노출
+    user1 = serializers.PrimaryKeyRelatedField(read_only=True)
+    user2 = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = ChatRoom

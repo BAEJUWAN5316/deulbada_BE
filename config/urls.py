@@ -1,3 +1,4 @@
+# config/urls.py
 from django.contrib import admin
 from django.http import HttpResponse
 from django.http import HttpResponse
@@ -57,3 +58,7 @@ urlpatterns = [
 # 개발 환경에서만 미디어 파일을 서빙하도록 설정
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('users/', include('users.urls')),
+    path('posts/', include('posts.urls')),
+    path('products/', include('products.urls')),
+]

@@ -224,3 +224,15 @@ class EmailCheckView(APIView):
                 {"available": True, "message": "사용 가능한 이메일입니다."},
                 status=status.HTTP_200_OK
             )
+# users/views.py
+from rest_framework import generics, permissions
+from .models import User
+from .serializers import MyProfileSerializer
+
+class MyProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = MyProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+

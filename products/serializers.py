@@ -1,4 +1,13 @@
 from rest_framework import serializers
+from products.models import Product
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = '__all__'
+        read_only_fields = ['user', 'created_at']
+
+from rest_framework import serializers
 from .models import Product, ProductCategory
 from categories.models import Category
 

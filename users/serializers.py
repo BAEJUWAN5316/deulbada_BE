@@ -1,6 +1,10 @@
 import re
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+# users/serializers.py
 from rest_framework import serializers
+from .models import User
+from posts.serializers import PostSerializer
+from products.serializers import ProductSerializer
 from .models import User
 
 
@@ -31,9 +35,25 @@ class ReportSerializer(serializers.ModelSerializer):
 
 class UserDetailSerializer(serializers.ModelSerializer):
     posts = serializers.SerializerMethodField()
+class MyProfileSerializer(serializers.ModelSerializer):
+    follower_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+    posts = PostSerializer(many=True, read_only=True)
+    products = ProductSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
+        fields = [
+            'id', 'username', 'nickname', 'profile_image', 'introduction',
+            'follower_count', 'following_count',
+            'posts', 'products'
+        ]
+
+    def get_follower_count(self, obj):
+        return obj.followers.count()
+
+    def get_following_count(self, obj):
+        return obj.followings.count()
         fields = ['id', 'account_id', 'username', 'email', 'posts']
 
     def get_posts(self, obj):

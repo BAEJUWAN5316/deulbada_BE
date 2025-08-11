@@ -9,12 +9,12 @@ class Product(TimeStampedModel):
     name = models.CharField(max_length=100)
     description = models.TextField()
     price = models.PositiveIntegerField()
-    stock = models.PositiveIntegerField()
     image_urls = models.URLField(default=list, blank=True)
     variety = models.CharField(max_length=50, blank=True)
     region = models.CharField(max_length=50, blank=True)
     harvest_date = models.DateField(null=True, blank=True)
-    product_url = models.URLField(blank=True, null=True)
+    sales_link = models.URLField(blank=True, null=True) # 판매링크 추가
+    tags = models.CharField(max_length=255, blank=True) # 태그 필드 추가
 
     def __str__(self):
         return f"[{self.name}] 판매자: {self.seller.username}"

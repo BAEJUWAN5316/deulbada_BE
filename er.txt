@@ -28,3 +28,8 @@ Python Path:
  'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final '
  'project\\venv\\Lib\\site-packages']
 Server time:	Tue, 05 Aug 2025 08:51:46 +0000
+from enum import Enum
+
+class UserRole(Enum):
+    USER = "user"
+    ADMIN = "admin"

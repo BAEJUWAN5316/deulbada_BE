@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.http import HttpResponse
+from django.http import HttpResponse
 from django.urls import path, include
 from django.conf import settings # settings 임포트
 from django.conf.urls.static import static # static 함수 임포트

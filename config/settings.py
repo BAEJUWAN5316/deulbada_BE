@@ -35,8 +35,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['43.201.70.73', '127.0.0.1', 'localhost']
-
+ALLOWED_HOSTS = ['43.201.70.73', '127.0.0.1', 'localhost', 'https://deulbada.netlify.app', 'http://deulbada.netlify.app', 'netlify.app']
 
 # Application definition
 
@@ -47,6 +46,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'rest_framework',  # DRF
+    
     'users',
     'categories',
     'posts',
@@ -86,8 +88,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # CORS Headers
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000", # 프론트엔드 개발 서버 주소
-    "http://127.0.0.1:3000",
+    "http://localhost:5173", # 프론트엔드 개발 서버 주소
+    "http://127.0.0.1:5173",
+    'https://deulbada.netlify.app', 
+    'http://deulbada.netlify.app', 
+    'netlify.app',
     # 여기에 실제 프론트엔드 배포 도메인을 추가해야 합니다.
 ]
 CORS_ALLOW_METHODS = [
@@ -160,15 +165,31 @@ REST_FRAMEWORK = {
 }
 
 
+
 WSGI_APPLICATION = 'config.wsgi.application'
+AUTH_USER_MODEL = 'users.User' 
 
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 
 DATABASES = {
     'default': env.db(),
 }
+AUTH_USER_MODEL = 'users.User'
 AUTH_USER_MODEL = 'users.User'
 
 
@@ -201,6 +222,8 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
+AUTH_USER_MODEL = 'users.User'
 
 
 

@@ -5,6 +5,3 @@ venv
 .venv
 .DS_Store
 media
-er.txt
-gem.txt
-staticfiles/

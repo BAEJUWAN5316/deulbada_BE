@@ -1,3 +1,4 @@
+# users/serializers.py
 from rest_framework import serializers
 from .models import User, UserProfile, Report
 from posts.models import Post

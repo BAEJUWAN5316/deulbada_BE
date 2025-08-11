@@ -2,35 +2,58 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 from django.db import models
 
 class UserManager(BaseUserManager):
-    def create_user(self, account_id, email, password=None, **extra_fields):
-        if not account_id:
-            raise ValueError('account_id는 필수입니다.')
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("email은 필수입니다.")
+        if not extra_fields.get("account_id"):
+            raise ValueError("account_id는 필수입니다.")
+        if not extra_fields.get("username"):
+            raise ValueError("username은 필수입니다.")
+
         email = self.normalize_email(email)
-        user = self.model(account_id=account_id, email=email, **extra_fields)
-        user.set_password(password)
+        user = self.model(email=email, **extra_fields)
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, account_id, email, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        return self.create_user(account_id, email, password, **extra_fields)
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("account_id", "admin")  # 필요 시 변경
+        extra_fields.setdefault("username", "admin")    # 필요 시 변경
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
+
+        return self.create_user(email, password, **extra_fields)
+
 
 class User(AbstractBaseUser, PermissionsMixin):
     account_id = models.CharField(max_length=30, unique=True)
     username = models.CharField(max_length=30, unique=True)
     email = models.EmailField(unique=True)
+
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    date_joined = models.DateTimeField(auto_now_add=True)
 
-    USERNAME_FIELD = 'account_id'
-    REQUIRED_FIELDS = ['email', 'username']
+    is_profile_completed = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['account_id', 'username']
 
     objects = UserManager()
 
     def __str__(self):
-        return self.account_id
+        return self.email
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -42,6 +65,7 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.account_id}의 프로필"
+
 
 class Report(models.Model):
     STATUS_CHOICES = [

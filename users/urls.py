@@ -1,6 +1,15 @@
+# apps/social/urls.py
 from django.urls import path
-from .views import UserListView
+from .views import (
+    ProfileRetrieveView,
+    FollowersListView,
+    FollowingListView,
+    FollowToggleView,
+)
 
 urlpatterns = [
-    path('users/', UserListView.as_view(), name='user-list'),
+    path('profiles/<str:account_id>/', ProfileRetrieveView.as_view(), name='profile-detail'),
+    path('profiles/<str:account_id>/followers/', FollowersListView.as_view(), name='profile-followers'),
+    path('profiles/<str:account_id>/following/', FollowingListView.as_view(), name='profile-following'),
+    path('profiles/<str:account_id>/follow/', FollowToggleView.as_view(), name='profile-follow-toggle'),
 ]

@@ -1,3 +1,6 @@
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
 from django.contrib.auth import get_user_model
 from django.db.models import Count, F, Q
 from django.shortcuts import get_object_or_404
@@ -10,7 +13,7 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.pagination import PageNumberPagination
 
-from .models import Post, Like, Comment, PostImage
+from .models import Post, Like, Comment
 from .serializers import (
     PostListSerializer, PostWriteSerializer, PostDetailSerializer, CommentSerializer
 )
@@ -30,7 +33,7 @@ class PostListView(generics.ListAPIView):
     pagination_class = SmallPagination
 
     def get_queryset(self):
-        qs = (Post.objects.select_related("author").prefetch_related("images")
+        qs = (Post.objects.select_related("author")
               .annotate(like_count=Count("likes", distinct=True),
                         comment_count=Count("comments", distinct=True),
                         author_is_farm_verified=F("author__is_farm_verified"))
@@ -51,6 +54,18 @@ class PostWriteView(generics.CreateAPIView):
     serializer_class = PostWriteSerializer
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('title', openapi.IN_FORM, type=openapi.TYPE_STRING, description='Title of the post', required=True),
+            openapi.Parameter('content', openapi.IN_FORM, type=openapi.TYPE_STRING, description='Content of the post', required=True),
+            openapi.Parameter('image', openapi.IN_FORM, type=openapi.TYPE_FILE, description='Single image file for the post'),
+            openapi.Parameter('images_add', openapi.IN_FORM, type=openapi.TYPE_FILE, description='List of additional image files for the post', collection_format='multi'),
+            openapi.Parameter('image_ids_delete', openapi.IN_FORM, type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_INTEGER), description='List of image IDs to delete from the post'),
+        ]
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
@@ -60,7 +75,7 @@ class PostDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
     lookup_field = "id"
     def get_queryset(self):
-        return (Post.objects.select_related("author").prefetch_related("images")
+        return (Post.objects.select_related("author")
                 .annotate(like_count=Count("likes", distinct=True),
                           comment_count=Count("comments", distinct=True),
                           author_is_farm_verified=F("author__is_farm_verified")))
@@ -71,8 +86,21 @@ class PostUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     parser_classes = (MultiPartParser, FormParser)
     lookup_field = "id"
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('title', openapi.IN_FORM, type=openapi.TYPE_STRING, description='Title of the post'),
+            openapi.Parameter('content', openapi.IN_FORM, type=openapi.TYPE_STRING, description='Content of the post'),
+            openapi.Parameter('image', openapi.IN_FORM, type=openapi.TYPE_FILE, description='Single image file for the post'),
+            openapi.Parameter('images_add', openapi.IN_FORM, type=openapi.TYPE_FILE, description='List of additional image files for the post', collection_format='multi'),
+            openapi.Parameter('image_ids_delete', openapi.IN_FORM, type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_INTEGER), description='List of image IDs to delete from the post'),
+        ]
+    )
+    def put(self, request, *args, **kwargs):
+        return super().put(request, *args, **kwargs)
+
     def get_queryset(self):
-        return Post.objects.all().prefetch_related("images")
+        return Post.objects.all()
     def perform_update(self, serializer):
         post = self.get_object()
         if post.author != self.request.user:
@@ -83,15 +111,7 @@ class PostUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
             raise PermissionDenied("작성자만 삭제 가능합니다.")
         instance.delete()
 
-# 개별 이미지 삭제 (X 버튼)
-class PostImageDeleteView(APIView):
-    permission_classes = [IsAuthenticated]
-    def delete(self, request, post_id, image_id):
-        img = get_object_or_404(PostImage, id=image_id, post_id=post_id)
-        if img.post.author != request.user:
-            raise PermissionDenied("작성자만 삭제 가능합니다.")
-        img.delete()
-        return Response(status=204)
+
 
 # 좋아요 토글
 class PostLikeToggleView(APIView):
@@ -111,7 +131,7 @@ class CommentCreateView(APIView):
         parent_id = request.data.get("parent_id")
         if not content:
             return Response({"error":"내용이 비어있습니다."}, status=400)
-        c = Comment(post=post, user=request.user, content=content)
+        c = Comment(post=post, user=request.request.user, content=content)
         if parent_id:
             parent = Comment.objects.filter(id=parent_id, post=post).first()
             if not parent:

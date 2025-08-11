@@ -15,11 +15,6 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self): return f"Post {self.id} by {self.author_id}"
 
-class PostImage(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="images")
-    image = models.ImageField(upload_to="post_images/", validators=[validate_image_size])
-    created_at = models.DateTimeField(auto_now_add=True)
-
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

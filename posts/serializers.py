@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Count, F
 from rest_framework import serializers
-from .models import Post, PostImage, Comment
+from .models import Post, Comment
 
 User = get_user_model()
 
@@ -10,13 +10,7 @@ class AuthorMiniSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id","account_id","username","profile_image","is_farm_verified"]
 
-class PostImageSerializer(serializers.ModelSerializer):
-    url = serializers.SerializerMethodField()
-    class Meta:
-        model = PostImage
-        fields = ["id","url","created_at"]
-    def get_url(self, obj):
-        return getattr(obj.image, "url", None)
+
 
 class _ImagesMixin(serializers.ModelSerializer):
     image_urls = serializers.SerializerMethodField()
@@ -41,9 +35,8 @@ class PostListSerializer(_ImagesMixin):
                   "like_count","comment_count","author_is_farm_verified","image_urls"]
 
 class PostDetailSerializer(PostListSerializer):
-    images = PostImageSerializer(many=True, read_only=True)
     class Meta(PostListSerializer.Meta):
-        fields = PostListSerializer.Meta.fields + ["images"]
+        fields = PostListSerializer.Meta.fields
 
 class PostWriteSerializer(serializers.ModelSerializer):
     images_add = serializers.ListField(
@@ -57,42 +50,42 @@ class PostWriteSerializer(serializers.ModelSerializer):
         model = Post
         fields = ["title","content","image","images_add","image_ids_delete"]
 
-    def validate(self, attrs):
-        add_list = self._get_add_list(attrs)
-        del_list = self._get_del_list(attrs)
-        if self.instance:
-            current = (1 if self.instance.image else 0) + self.instance.images.count()
-        else:
-            current = 0
-        incoming_single = 1 if attrs.get("image") else 0
-        remaining = max(0, current - len(del_list))
-        total_after = remaining + incoming_single + len(add_list)
-        if total_after > 5:
-            raise serializers.ValidationError("이미지는 최대 5장까지 업로드 가능합니다.")
-        return attrs
+    # def validate(self, attrs):
+    #     add_list = self._get_add_list(attrs)
+    #     del_list = self._get_del_list(attrs)
+    #     if self.instance:
+    #         current = (1 if self.instance.image else 0) + self.instance.images.count()
+    #     else:
+    #         current = 0
+    #     incoming_single = 1 if attrs.get("image") else 0
+    #     remaining = max(0, current - len(del_list))
+    #     total_after = remaining + incoming_single + len(add_list)
+    #     if total_after > 5:
+    #         raise serializers.ValidationError("이미지는 최대 5장까지 업로드 가능합니다.")
+    #     return attrs
 
-    def create(self, data):
-        add = self._get_add_list(data, pop=True)
-        post = Post.objects.create(**data)
-        self._bulk_create_images(post, add)
-        return post
+    # def create(self, data):
+    #     add = self._get_add_list(data, pop=True)
+    #     post = Post.objects.create(**data)
+    #     self._bulk_create_images(post, add)
+    #     return post
 
-    def update(self, inst, data):
-        add = self._get_add_list(data, pop=True)
-        dels = self._get_del_list(data, pop=True)
-        for k,v in data.items(): setattr(inst, k, v)
-        inst.save()
-        if dels: PostImage.objects.filter(post=inst, id__in=dels).delete()
-        self._bulk_create_images(inst, add)
-        return inst
+    # def update(self, inst, data):
+    #     add = self._get_add_list(data, pop=True)
+    #     dels = self._get_del_list(data, pop=True)
+    #     for k,v in data.items(): setattr(inst, k, v)
+    #     inst.save()
+    #     if dels: PostImage.objects.filter(post=inst, id__in=dels).delete()
+    #     self._bulk_create_images(inst, add)
+    #     return inst
 
-    def _get_add_list(self, data, pop=False):
-        return (data.pop("images_add", []) if pop else data.get("images_add", [])) or []
-    def _get_del_list(self, data, pop=False):
-        return (data.pop("image_ids_delete", []) if pop else data.get("image_ids_delete", [])) or []
-    def _bulk_create_images(self, post, files):
-        if files:
-            PostImage.objects.bulk_create([PostImage(post=post, image=f) for f in files])
+    # def _get_add_list(self, data, pop=False):
+    #     return (data.pop("images_add", []) if pop else data.get("images_add", [])) or []
+    # def _get_del_list(self, data, pop=False):
+    #     return (data.pop("image_ids_delete", []) if pop else data.get("image_ids_delete", [])) or []
+    # def _bulk_create_images(self, post, files):
+    #     if files:
+    #         PostImage.objects.bulk_create([PostImage(post=post, image=f) for f in files])
 
 class CommentSerializer(serializers.ModelSerializer):
     user = AuthorMiniSerializer(read_only=True)

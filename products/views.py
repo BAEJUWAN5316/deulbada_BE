@@ -21,11 +21,19 @@ class ProductListCreateView(generics.ListCreateAPIView):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        filter_by = self.kwargs.get('filter_by')
-        if filter_by:
-            # Filter products by seller's username
-            return Product.objects.filter(seller__username=filter_by)
-        return Product.objects.all()
+        qs = Product.objects.all()
+
+        # Filter by username from URL path
+        username = self.kwargs.get('username')
+        if username:
+            qs = qs.filter(seller__username=username)
+
+        # Filter by category from URL path
+        category_name = self.kwargs.get('category_name')
+        if category_name:
+            qs = qs.filter(category=category_name)
+
+        return qs
 
     def perform_create(self, serializer):
         serializer.save(seller=self.request.user)

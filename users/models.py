@@ -192,8 +192,4 @@ class Report(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-<<<<<<< HEAD
         return f"{self.reporter} → {self.target_user}"
-=======
-        return f'{self.reporter} → {self.target_user}'
->>>>>>> feature/hyoeun

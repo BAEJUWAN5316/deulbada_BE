@@ -23,8 +23,8 @@ class ProductListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         filter_by = self.kwargs.get('filter_by')
         if filter_by:
-            # Now filter directly by the 'category' field on Product
-            return Product.objects.filter(category=filter_by)
+            # Filter products by seller's username
+            return Product.objects.filter(seller__username=filter_by)
         return Product.objects.all()
 
     def perform_create(self, serializer):

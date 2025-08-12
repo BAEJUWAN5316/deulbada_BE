@@ -1,5 +1,7 @@
+# views.py
+
 from django.contrib.auth import get_user_model
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, Q, Exists, OuterRef, Value, BooleanField
 from django.shortcuts import get_object_or_404
 
 from rest_framework import generics, permissions, status
@@ -17,12 +19,26 @@ from .serializers import (
 
 User = get_user_model()
 
+
 class SmallPagination(PageNumberPagination):
     page_size = 20 
     page_size_query_param = "page_size"
     max_page_size = 50
 
-def _truthy(v): return str(v).lower() in {"1","true","t","yes","y","on"}
+
+def _truthy(v):
+    return str(v).lower() in {"1", "true", "t", "yes", "y", "on"}
+
+
+def _liked_annotation(request):
+    """
+    로그인 유저라면 Exists 서브쿼리로 is_liked 계산,
+    비로그인 유저면 False 고정.
+    """
+    if getattr(request, "user", None) and request.user.is_authenticated:
+        return Exists(Like.objects.filter(user=request.user, post_id=OuterRef('pk')))
+    return Value(False, output_field=BooleanField())
+
 
 class PostListView(generics.ListAPIView):
     serializer_class = PostListSerializer
@@ -30,21 +46,38 @@ class PostListView(generics.ListAPIView):
     pagination_class = SmallPagination
 
     def get_queryset(self):
-        qs = (Post.objects.select_related("author").prefetch_related("images")
-              .annotate(like_count=Count("likes", distinct=True),
-                        comment_count=Count("comments", distinct=True),
-                        author_is_farm_verified=F("author__is_farm_verified"))
-              .order_by("-created_at"))
-        user_key = self.request.query_params.get("user")
+        qs = (
+            Post.objects.select_related("author").prefetch_related("images")
+            .annotate(
+                like_count=Count("likes", distinct=True),
+                comment_count=Count("comments", distinct=True),
+                author_is_farm_verified=F("author__is_farm_verified"),
+                is_liked=_liked_annotation(self.request),  # 추가
+            )
+            .order_by("-created_at")
+        )
+
+        # ① URL path(/posts/<user_key>/) 또는 ② query(?user=) 둘 다 지원
+        user_key = (self.kwargs.get("user_key")
+                    if hasattr(self, "kwargs") else None) or self.request.query_params.get("user")
+
         if user_key:
             if str(user_key).isdigit():
-                user = User.objects.filter(Q(id=user_key) | Q(account_id__iexact=user_key)).first()
+                user = User.objects.filter(
+                    Q(id=user_key) | Q(account_id__iexact=user_key)
+                ).first()
             else:
-                user = User.objects.filter(Q(account_id__iexact=user_key) | Q(username__iexact=user_key)).first()
+                user = User.objects.filter(
+                    Q(account_id__iexact=user_key) | Q(username__iexact=user_key)
+                ).first()
             qs = qs.filter(author=user) if user else Post.objects.none()
-        if _truthy(self.request.query_params.get("photos","")):
+
+        # 사진 있는 게시글만 필터
+        if _truthy(self.request.query_params.get("photos", "")):
             qs = qs.filter(Q(image__isnull=False) | Q(images__isnull=False)).distinct()
+
         return qs
+
 
 class PostWriteView(generics.CreateAPIView):
     serializer_class = PostWriteSerializer
@@ -54,7 +87,6 @@ class PostWriteView(generics.CreateAPIView):
     def perform_create(self, serializer):
         # 기본 게시글 생성
         post = serializer.save(author=self.request.user)
-        
         # 추가 이미지들 처리
         self._handle_additional_images(post)
     
@@ -79,21 +111,26 @@ class PostWriteView(generics.CreateAPIView):
                 raise ValidationError(f"이미지 '{img.name}'의 크기는 5MB를 초과할 수 없습니다.")
         
         # PostImage 객체들 생성
-        new_images = [
-            PostImage(post=post, image=img)
-            for img in additional_images
-        ]
+        new_images = [PostImage(post=post, image=img) for img in additional_images]
         PostImage.objects.bulk_create(new_images)
+
 
 class PostDetailView(generics.RetrieveAPIView):
     serializer_class = PostDetailSerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = "id"
+
     def get_queryset(self):
-        return (Post.objects.select_related("author").prefetch_related("images")
-                .annotate(like_count=Count("likes", distinct=True),
-                          comment_count=Count("comments", distinct=True),
-                          author_is_farm_verified=F("author__is_farm_verified")))
+        return (
+            Post.objects.select_related("author").prefetch_related("images")
+            .annotate(
+                like_count=Count("likes", distinct=True),
+                comment_count=Count("comments", distinct=True),
+                author_is_farm_verified=F("author__is_farm_verified"),
+                is_liked=_liked_annotation(self.request),  # 추가
+            )
+        )
+
 
 class PostUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PostWriteSerializer
@@ -102,7 +139,12 @@ class PostUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = "id"
     
     def get_queryset(self):
-        return Post.objects.all().prefetch_related("images")
+        # 응답 일관성을 위해 is_liked까지 붙여줌(옵션)
+        return (
+            Post.objects.all()
+            .prefetch_related("images")
+            .annotate(is_liked=_liked_annotation(self.request))
+        )
     
     def perform_update(self, serializer):
         post = self.get_object()
@@ -124,17 +166,18 @@ class PostUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
         if delete_ids:
             # 콤마로 구분된 문자열을 리스트로 변환
             if isinstance(delete_ids, str):
-                delete_ids = [int(id.strip()) for id in delete_ids.split(',') if id.strip().isdigit()]
+                delete_ids = [int(i.strip()) for i in delete_ids.split(',') if i.strip().isdigit()]
             elif isinstance(delete_ids, list):
-                delete_ids = [int(id) for id in delete_ids if str(id).isdigit()]
-            
+                delete_ids = [int(i) for i in delete_ids if str(i).isdigit()]
+            else:
+                delete_ids = []
+
             if delete_ids:
                 PostImage.objects.filter(post=post, id__in=delete_ids).delete()
     
     def _handle_additional_images_update(self, post):
         """수정 시 추가 이미지들 처리"""
         additional_images = self.request.FILES.getlist('images_add')
-        
         if not additional_images:
             return
         
@@ -155,11 +198,7 @@ class PostUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
             if img.size > max_size:
                 raise ValidationError(f"이미지 '{img.name}'의 크기는 5MB를 초과할 수 없습니다.")
         
-        # PostImage 객체들 생성
-        new_images = [
-            PostImage(post=post, image=img)
-            for img in additional_images
-        ]
+        new_images = [PostImage(post=post, image=img) for img in additional_images]
         PostImage.objects.bulk_create(new_images)
     
     def perform_destroy(self, instance):
@@ -167,9 +206,11 @@ class PostUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
             raise PermissionDenied("작성자만 삭제 가능합니다.")
         instance.delete()
 
+
 # 개별 이미지 삭제 (X 버튼)
 class PostImageDeleteView(APIView):
     permission_classes = [IsAuthenticated]
+
     def delete(self, request, post_id, image_id):
         img = get_object_or_404(PostImage, id=image_id, post_id=post_id)
         if img.post.author != request.user:
@@ -177,34 +218,43 @@ class PostImageDeleteView(APIView):
         img.delete()
         return Response(status=204)
 
+
 # 좋아요 토글
 class PostLikeToggleView(APIView):
     permission_classes = [IsAuthenticated]
+
     def post(self, request, post_id):
         post = get_object_or_404(Post, id=post_id)
         like, created = Like.objects.get_or_create(user=request.user, post=post)
-        if created: return Response({"message":"좋아요 완료","post_id":post.id}, status=status.HTTP_201_CREATED)
-        like.delete(); return Response({"message":"좋아요 취소","post_id":post.id})
+        if created:
+            return Response({"message": "좋아요 완료", "post_id": post.id}, status=status.HTTP_201_CREATED)
+        like.delete()
+        return Response({"message": "좋아요 취소", "post_id": post.id})
+
 
 # 댓글 생성(대댓글 포함)
 class CommentCreateView(APIView):
     permission_classes = [IsAuthenticated]
+
     def post(self, request, post_id):
         post = get_object_or_404(Post, id=post_id)
         content = request.data.get("content")
         parent_id = request.data.get("parent_id")
         if not content:
-            return Response({"error":"내용이 비어있습니다."}, status=400)
+            return Response({"error": "내용이 비어있습니다."}, status=400)
+
         c = Comment(post=post, user=request.user, content=content)
         if parent_id:
             parent = Comment.objects.filter(id=parent_id, post=post).first()
             if not parent:
-                return Response({"error":"부모 댓글 없음"}, status=404)
+                return Response({"error": "부모 댓글 없음"}, status=404)
             c.parent = parent
         c.save()
-        # reply_count annotate
+
+        # reply_count annotate 대체: 바로 계산해서 응답
         c.reply_count = c.replies.count()
         return Response(CommentSerializer(c).data, status=201)
+
 
 # 댓글 수정/삭제
 class CommentUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
@@ -212,24 +262,30 @@ class CommentUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = "id"
+
     def perform_update(self, serializer):
         c = self.get_object()
         if c.user != self.request.user:
             raise PermissionDenied("작성자만 수정 가능")
         serializer.save()
+
     def perform_destroy(self, instance):
         owner = instance.post.author
         if instance.user != self.request.user and owner != self.request.user:
             raise PermissionDenied("작성자 또는 게시글 작성자만 삭제 가능")
         instance.delete()
 
+
 # 특정 게시글의 댓글 목록(부모 댓글만) — 페이지네이션
 class CommentListView(generics.ListAPIView):
     serializer_class = CommentSerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = SmallPagination
+
     def get_queryset(self):
         post_id = self.kwargs.get("post_id")
-        return (Comment.objects.filter(post_id=post_id, parent__isnull=True)
-                .annotate(reply_count=Count("replies", distinct=True))
-                .order_by("-created_at"))
+        return (
+            Comment.objects.filter(post_id=post_id, parent__isnull=True)
+            .annotate(reply_count=Count("replies", distinct=True))
+            .order_by("-created_at")
+        )

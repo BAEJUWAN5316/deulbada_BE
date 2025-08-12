@@ -98,7 +98,7 @@ class FarmOwnerProfileView(APIView):
         return Response({"message":"농장주 프로필 저장됨"})
     patch = put
 
-# 상대 프로필
+# 상대 프로필 (여긴 이미 is_following 처리 OK)
 class ProfileRetrieveView(APIView):
     permission_classes = [permissions.AllowAny]
     def get(self, request, account_id):
@@ -119,22 +119,45 @@ class ProfileRetrieveView(APIView):
         data = ProfilePageSerializer(obj, context={"viewer": request.user if request.user.is_authenticated else None}).data
         return Response(data)
 
-# 팔로워/팔로잉 목록(페이지네이션)
+# 팔로워 목록(페이지네이션) — is_following 추가 + 정렬 안전하게
 class FollowersListView(ListAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = UserSearchSerializer
     pagination_class = SmallPagination
+
     def get_queryset(self):
         u = get_object_or_404(User, account_id=self.kwargs["account_id"])
-        return User.objects.filter(following__following=u).order_by("username")
+        base_qs = User.objects.filter(following__following=u)
+        if self.request.user.is_authenticated:
+            return base_qs.annotate(
+                is_following=Exists(Follow.objects.filter(
+                    follower=self.request.user, following=OuterRef("pk")
+                ))
+            ).order_by("account_id")
+        else:
+            return base_qs.annotate(
+                is_following=Value(False, output_field=BooleanField())
+            ).order_by("account_id")
 
+# 팔로잉 목록(페이지네이션) — is_following 추가 + 정렬 안전하게
 class FollowingListView(ListAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = UserSearchSerializer
     pagination_class = SmallPagination
+
     def get_queryset(self):
         u = get_object_or_404(User, account_id=self.kwargs["account_id"])
-        return User.objects.filter(followed_by__follower=u).order_by("username")
+        base_qs = User.objects.filter(followed_by__follower=u)
+        if self.request.user.is_authenticated:
+            return base_qs.annotate(
+                is_following=Exists(Follow.objects.filter(
+                    follower=self.request.user, following=OuterRef("pk")
+                ))
+            ).order_by("account_id")
+        else:
+            return base_qs.annotate(
+                is_following=Value(False, output_field=BooleanField())
+            ).order_by("account_id")
 
 class FollowToggleView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -163,7 +186,7 @@ class ReportCreateAPIView(CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = ReportSerializer
 
-# 유저 검색(페이지네이션)
+# 유저 검색(페이지네이션) — is_following 추가 + 정렬 변경
 class UserSearchAPIView(ListAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = UserSearchSerializer
@@ -172,4 +195,14 @@ class UserSearchAPIView(ListAPIView):
         q = self.request.GET.get("q","").strip()
         if not q:
             return User.objects.none()
-        return search_users(q).order_by("username")
+        base_qs = search_users(q)
+        if self.request.user.is_authenticated:
+            return base_qs.annotate(
+                is_following=Exists(Follow.objects.filter(
+                    follower=self.request.user, following=OuterRef("pk")
+                ))
+            ).order_by("account_id")
+        else:
+            return base_qs.annotate(
+                is_following=Value(False, output_field=BooleanField())
+            ).order_by("account_id")

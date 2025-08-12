@@ -12,9 +12,16 @@ MAX_IMG = 5 * 1024 * 1024
 
 # ====== 추가: 유저 직렬화기들 ======
 class SimpleUserSerializer(serializers.ModelSerializer):
+    # 팔로우 여부 (뷰에서 annotate로 주입됨)
+    is_following = serializers.BooleanField(read_only=True, default=False)
+
     class Meta:
         model = User
-        fields = ["id", "account_id", "username", "profile_image"]
+        fields = ["id", "account_id", "username", "profile_image", "is_following"]
+        extra_kwargs = {
+            # username 비필수
+            "username": {"required": False, "allow_blank": True, "allow_null": True},
+        }
 
 class UserSerializer(serializers.ModelSerializer):
     follower_count = serializers.IntegerField(read_only=True, required=False)
@@ -28,14 +35,22 @@ class UserSerializer(serializers.ModelSerializer):
             "is_farm_owner", "is_farm_verified",
             "follower_count", "following_count",
         ]
+        extra_kwargs = {
+            # username 비필수
+            "username": {"required": False, "allow_blank": True, "allow_null": True},
+        }
 # =================================
 
 # 회원가입
 class UserSignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["email", "password", "account_id", "username"]
-        extra_kwargs = {"password": {"write_only": True}}
+        fields = ["email", "password", "account_id"]
+        extra_kwargs = {
+            "password": {"write_only": True},
+            # username 비필수
+            "username": {"required": False, "allow_blank": True, "allow_null": True},
+        }
 
     def validate_email(self, v):
         if User.objects.filter(email=v).exists():
@@ -55,6 +70,7 @@ class UserSignupSerializer(serializers.ModelSerializer):
         return v
 
     def create(self, validated_data):
+        # username 없어도 동작하도록 create_user로 위임
         return User.objects.create_user(**validated_data)
 
 # 생산자(농장주) 회원가입
@@ -99,6 +115,10 @@ class ProfileSetupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["username","account_id","introduction","profile_image"]
+        extra_kwargs = {
+            # username 비필수
+            "username": {"required": False, "allow_blank": True, "allow_null": True},
+        }
 
     def validate_account_id(self, value):
         qs = User.objects.filter(account_id=value)
@@ -121,9 +141,16 @@ class ProfileSetupSerializer(serializers.ModelSerializer):
 
 # 목록/검색용
 class UserSearchSerializer(serializers.ModelSerializer):
+    # 목록/검색에서도 팔로우 여부 내려감
+    is_following = serializers.BooleanField(read_only=True, default=False)
+
     class Meta:
         model = User
-        fields = ["id","account_id","username","profile_image"]
+        fields = ["id","account_id","username","profile_image","is_following"]
+        extra_kwargs = {
+            # username 비필수
+            "username": {"required": False, "allow_blank": True, "allow_null": True},
+        }
 
 # 프로필 화면(내/상대 공용)
 class ProfilePageSerializer(serializers.ModelSerializer):
@@ -139,12 +166,17 @@ class ProfilePageSerializer(serializers.ModelSerializer):
             "is_farm_owner","is_farm_verified","follower_count","following_count",
             "is_me","is_following",
         ]
+        extra_kwargs = {
+            # username 비필수
+            "username": {"required": False, "allow_blank": True, "allow_null": True},
+        }
 
     def get_is_me(self, obj):
         viewer = self.context.get("viewer")
         return bool(viewer and viewer.id == obj.id)
 
     def get_is_following(self, obj):
+        # 뷰에서 annotate된 값을 그대로 사용, 없으면 False
         return bool(getattr(obj, "is_following", False))
 
 # 내가 쓴 글 리스트 응답용(포스트 시리얼라이저는 posts 앱에서)
@@ -164,6 +196,7 @@ class ReportSerializer(serializers.ModelSerializer):
 
 # 검색 쿼리셋
 def search_users(q: str):
+    # username이 비필수(null/blank)여도 안전 (null은 자동 제외)
     return User.objects.filter(Q(username__icontains=q) | Q(account_id__icontains=q))
 
 # 로그인(JWT 커스텀)

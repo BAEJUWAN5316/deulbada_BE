@@ -40,16 +40,15 @@ class UserManager(BaseUserManager):
             raise ValueError("슈퍼유저 비밀번호는 필수입니다.")
         return self.create_user(email, password, **extra)
 
-account_id = models.CharField(max_length=30, unique=True, null=True, blank=True)
 
 class User(AbstractBaseUser, PermissionsMixin):
     # 기본 계정 정보
     email = models.EmailField(unique=True)
 
-    # 마이그레이션 안전하게 진행하려고 초기에 null 허용
+    
     account_id = models.CharField(max_length=30, unique=True, null=True, blank=True)
-    username   = models.CharField(max_length=30, unique=True)
-    nickname   = models.CharField(max_length=30, blank=True, null=True)
+    username = models.CharField(max_length=30, unique=False, null=True, blank=True)  
+    nickname = models.CharField(max_length=30, blank=True, null=True)
     introduction = models.TextField(blank=True)
 
     profile_image = models.ImageField(
@@ -61,21 +60,21 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     # 상태/플래그
     is_profile_completed = models.BooleanField(default=False)
-    is_farm_owner   = models.BooleanField(default=False)
+    is_farm_owner = models.BooleanField(default=False)
     is_farm_verified = models.BooleanField(default=False)
 
     is_active = models.BooleanField(default=True)
-    is_staff  = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
 
     # 타임스탬프
     last_login = models.DateTimeField(null=True, blank=True)
     date_joined = models.DateTimeField(default=timezone.now)
-    created_at  = models.DateTimeField(auto_now_add=True)
-    updated_at  = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # 인증 필드 설정(이메일 로그인)
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["account_id", "username"]
+    REQUIRED_FIELDS = ["account_id"]  
 
     objects = UserManager()
 
@@ -96,19 +95,19 @@ class UserProfile(models.Model):
     )
     bio = models.TextField(blank=True, null=True)
 
-    is_farm_owner   = models.BooleanField(default=False)
+    is_farm_owner = models.BooleanField(default=False)
     is_farm_verified = models.BooleanField(default=False)
 
-    ceo_name        = models.CharField(max_length=50, blank=True)
-    phone           = models.CharField(max_length=30, blank=True)
+    ceo_name = models.CharField(max_length=50, blank=True)
+    phone = models.CharField(max_length=30, blank=True)
     business_number = models.CharField(max_length=50, blank=True)
 
     address_postcode = models.CharField(max_length=20, blank=True)
-    address_line1    = models.CharField(max_length=200, blank=True)
-    address_line2    = models.CharField(max_length=200, blank=True)
+    address_line1 = models.CharField(max_length=200, blank=True)
+    address_line2 = models.CharField(max_length=200, blank=True)
 
-    business_doc   = models.FileField(upload_to="business_docs/", blank=True, null=True)
-    created_at     = models.DateTimeField(auto_now_add=True)
+    business_doc = models.FileField(upload_to="business_docs/", blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user.email}의 프로필"
@@ -153,7 +152,7 @@ class Report(models.Model):
         ("resolved", "처리 완료"),
         ("rejected", "무시됨"),
     ]
-    reporter    = models.ForeignKey(
+    reporter = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name="reports_made",
         on_delete=models.CASCADE,

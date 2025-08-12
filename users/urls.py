@@ -1,5 +1,4 @@
 from django.urls import path
-<<<<<<< HEAD
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     SignupView, ProducerSignupView, CustomTokenObtainPairView,
@@ -31,18 +30,4 @@ urlpatterns = [
     path("search/", UserSearchAPIView.as_view()),
     path("myposts/", MyPostsView.as_view()),
     path("report/", ReportCreateAPIView.as_view()),
-=======
-from .views import (
-    UserSearchAPIView,
-    MyPostsView,
-    ReportCreateAPIView,
-    SignupView,
-)
-
-urlpatterns = [
-    path('search/', UserSearchAPIView.as_view(), name='user-search'),
-    path('myposts/', MyPostsView.as_view(), name='user-myposts'),
-    path('report/', ReportCreateAPIView.as_view(), name='user-report'),
-    path('signup/', SignupView.as_view(), name='user-signup'),  
->>>>>>> feature/hyoeun
 ]

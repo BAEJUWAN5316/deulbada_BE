@@ -21,5 +21,7 @@ urlpatterns = [
     path("<int:post_id>/comments/new/", CommentCreateView.as_view(),
          name="comment-create"),                                                     # POST  /posts/<post_id>/comments/new/
     path("comments/<int:id>/", CommentUpdateDeleteView.as_view(),
-         name="comment-edit"),                                                       # PUT/PATCH/DELETE /posts/comments/<id>/
+         name="comment-edit"),                                                        # PUT/PATCH/DELETE /posts/comments/<id>/
+                                                           
+    path("by/<str:user_key>/", PostListView.as_view(), name="list-by-user"),       
 ]

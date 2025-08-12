@@ -1,35 +1,86 @@
-(venv) PS C:\Users\MIDI-PC\Desktop\backend\250729_final project> python manage.py makemigrations
+[12/Aug/2025 02:27:31] "GET /swagger/ HTTP/1.1" 200 2216
+Internal Server Error: /swagger/
 Traceback (most recent call last):
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\manage.py", line 22, in <module>
-    main()
-    ~~~~^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\manage.py", line 18, in main
-    execute_from_command_line(sys.argv)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
-    utility.execute()
-    ~~~~~~~~~~~~~~~^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\core\management\__init__.py", line 436, in execute    
-    self.fetch_command(subcommand).run_from_argv(self.argv)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv  
-    self.execute(*args, **cmd_options)
-    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\core\management\base.py", line 460, in execute        
-    output = self.handle(*args, **options)
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\core\management\base.py", line 107, in wrapper        
-    res = handle_func(*args, **kwargs)
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\core\management\commands\makemigrations.py", line 140, in handle
-    loader = MigrationLoader(None, ignore_no_migrations=True)
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\db\migrations\loader.py", line 58, in __init__        
-    self.build_graph()
-    ~~~~~~~~~~~~~~~~^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\db\migrations\loader.py", line 276, in build_graph    
-    self.graph.validate_consistency()
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\db\migrations\graph.py", line 198, in validate_consistency
-    [n.raise_error() for n in self.node_map.values() if isinstance(n, DummyNode)]
-     ~~~~~~~~~~~~~^^
-  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\db\migrations\graph.py", line 60, in raise_error      
-    raise NodeNotFoundError(self.error_message, self.key, origin=self.origin)
-django.db.migrations.exceptions.NodeNotFoundError: Migration uploads.0002_initial depe
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner        
+    response = get_response(request)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response    
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper  
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\views\generic\base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\rest_framework\views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\rest_framework\views.py", line 475, in handle_exception      
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\rest_framework\views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\views.py", line 112, in get
+    schema = generator.get_schema(request, self.public)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\generators.py", line 276, in get_schema
+    paths, prefix = self.get_paths(endpoints, components, request, public)
+                    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\generators.py", line 482, in get_paths
+    operation = self.get_operation(view, path, prefix, method, components, request)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\generators.py", line 524, in get_operation
+    operation = view_inspector.get_operation(operation_keys)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\inspectors\view.py", line 32, in get_operation      
+    body = self.get_request_body_parameters(consumes)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\inspectors\view.py", line 82, in get_request_body_parameters
+    return self.get_request_form_parameters(serializer)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\inspectors\view.py", line 134, in get_request_form_parameters
+    return self.serializer_to_parameters(serializer, in_=openapi.IN_FORM)           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\inspectors\base.py", line 449, in serializer_to_parameters
+    return self.probe_inspectors(
+           ~~~~~~~~~~~~~~~~~~~~~^
+        self.field_inspectors, 'get_request_parameters', serializer, {'field_inspectors': self.field_inspectors},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        in_=in_
+        ^^^^^^^
+    ) or []
+    ^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\inspectors\base.py", line 110, in probe_inspectors  
+    result = method(obj, **kwargs)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\inspectors\field.py", line 65, in get_request_parameters
+    self.probe_field_inspectors(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        value, openapi.Parameter, self.use_definitions,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        name=self.get_parameter_name(key), in_=in_
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\inspectors\base.py", line 228, in probe_field_inspectors
+    return self.probe_inspectors(
+           ~~~~~~~~~~~~~~~~~~~~~^
+        self.field_inspectors, 'field_to_swagger_object', field, {'field_inspectors': self.field_inspectors},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        swagger_object_type=swagger_object_type, use_references=use_references, **kwargs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\inspectors\base.py", line 110, in probe_inspectors  
+    result = method(obj, **kwargs)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\inspectors\field.py", line 93, in field_to_swagger_object
+    child_schema = self.probe_field_inspectors(field.child, ChildSwaggerType, use_references)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\inspectors\base.py", line 228, in probe_field_inspectors
+    return self.probe_inspectors(
+           ~~~~~~~~~~~~~~~~~~~~~^
+        self.field_inspectors, 'field_to_swagger_object', field, {'field_inspectors': self.field_inspectors},
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        swagger_object_type=swagger_object_type, use_references=use_references, **kwargs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\inspectors\base.py", line 110, in probe_inspectors  
+    result = method(obj, **kwargs)
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\drf_yasg\inspectors\field.py", line 733, in field_to_swagger_object
+    raise err  # pragma: no cover
+    ^^^^^^^^^
+drf_yasg.errors.SwaggerGenerationError: FileField is supported only in a 
+formData Parameter or response Schema
+[12/Aug/2025 02:27:31] "GET /swagger/?format=openapi HTTP/1.1" 500 210613

@@ -23,7 +23,7 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'seller', 'seller_username', 'is_seller_verified', 'name', 'description', 'price',
             'image_urls', 'variety', 'region', 'harvest_date', 'created_at', 'updated_at',
-            'category' # Direct category field
+            'category', 'tags' # Direct category field, added tags
         ]
         read_only_fields = ['seller', 'created_at']
 

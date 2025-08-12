@@ -17,11 +17,24 @@ def get_default_profile_image():
 
 
 class UserManager(BaseUserManager):
+<<<<<<< HEAD
     def create_user(self, email, password=None, **extra):
         if not email:
             raise ValueError("이메일은 필수입니다.")
         email = self.normalize_email(email)
         user = self.model(email=email, **extra)
+=======
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("email은 필수입니다.")
+        if not extra_fields.get("account_id"):
+            raise ValueError("account_id는 필수입니다.")
+        if not extra_fields.get("username"):
+            raise ValueError("username은 필수입니다.")
+
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+>>>>>>> feature/hyoeun
         if password:
             user.set_password(password)
         else:
@@ -29,6 +42,7 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
+<<<<<<< HEAD
     def create_superuser(self, email, password=None, **extra):
         extra.setdefault("is_staff", True)
         extra.setdefault("is_superuser", True)
@@ -39,11 +53,26 @@ class UserManager(BaseUserManager):
         if not password:
             raise ValueError("슈퍼유저 비밀번호는 필수입니다.")
         return self.create_user(email, password, **extra)
+=======
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault("account_id", "admin")  # 필요 시 변경
+        extra_fields.setdefault("username", "admin")    # 필요 시 변경
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
+
+        return self.create_user(email, password, **extra_fields)
+>>>>>>> feature/hyoeun
 
 
 class User(AbstractBaseUser, PermissionsMixin):
     # 기본 계정 정보
     email = models.EmailField(unique=True)
+<<<<<<< HEAD
 
     
     account_id = models.CharField(max_length=30, unique=True, null=True, blank=True)
@@ -62,10 +91,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_profile_completed = models.BooleanField(default=False)
     is_farm_owner = models.BooleanField(default=False)
     is_farm_verified = models.BooleanField(default=False)
+=======
+>>>>>>> feature/hyoeun
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
+<<<<<<< HEAD
     # 타임스탬프
     last_login = models.DateTimeField(null=True, blank=True)
     date_joined = models.DateTimeField(default=timezone.now)
@@ -75,6 +107,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     # 인증 필드 설정(이메일 로그인)
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["account_id"]  
+=======
+    is_profile_completed = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['account_id', 'username']
+>>>>>>> feature/hyoeun
 
     objects = UserManager()
 
@@ -146,6 +187,7 @@ class Follow(models.Model):
         return f"{self.follower_id} -> {self.following_id}"
 
 
+
 class Report(models.Model):
     STATUS_CHOICES = [
         ("pending", "처리 대기"),
@@ -167,4 +209,8 @@ class Report(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+<<<<<<< HEAD
         return f"{self.reporter} → {self.target_user}"
+=======
+        return f'{self.reporter} → {self.target_user}'
+>>>>>>> feature/hyoeun

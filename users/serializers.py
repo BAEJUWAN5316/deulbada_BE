@@ -2,6 +2,7 @@ import re
 from django.contrib.auth import get_user_model, authenticate
 from django.db.models import Q, Count, Exists, OuterRef
 from rest_framework import serializers
+<<<<<<< HEAD
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import UserProfile, Report, Follow
@@ -22,6 +23,12 @@ class SimpleUserSerializer(serializers.ModelSerializer):
             # username 비필수
             "username": {"required": False, "allow_blank": True, "allow_null": True},
         }
+=======
+from .models import User, UserProfile, Report
+from posts.models import Post
+from posts.serializers import PostListSerializer
+
+>>>>>>> feature/hyoeun
 
 class UserSerializer(serializers.ModelSerializer):
     follower_count = serializers.IntegerField(read_only=True, required=False)
@@ -29,6 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
+<<<<<<< HEAD
         fields = [
             "id", "email", "account_id", "username", "nickname",
             "profile_image", "introduction",
@@ -40,6 +48,35 @@ class UserSerializer(serializers.ModelSerializer):
             "username": {"required": False, "allow_blank": True, "allow_null": True},
         }
 # =================================
+=======
+        fields = ['id', 'account_id', 'username', 'email']
+
+
+class SignupSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    # 프로필(소유주 여부)은 UserProfile에 저장
+    is_farm_owner = serializers.BooleanField(required=True)
+
+    class Meta:
+        model = User
+        # ✅ 이메일이 로그인 아이디이므로 email 필수
+        fields = ['email', 'password', 'account_id', 'username', 'is_farm_owner']
+
+    def create(self, validated_data):
+        is_farm_owner = validated_data.pop('is_farm_owner')
+        password = validated_data.pop('password')
+
+        # UserManager.create_user(email, password, **extra_fields) 사용
+        user = User.objects.create_user(password=password, **validated_data)
+
+        # 프로필 생성/업데이트
+        UserProfile.objects.update_or_create(
+            user=user,
+            defaults={'is_farm_owner': is_farm_owner}
+        )
+        return user
+
+>>>>>>> feature/hyoeun
 
 # 회원가입
 class UserSignupSerializer(serializers.ModelSerializer):
@@ -52,6 +89,7 @@ class UserSignupSerializer(serializers.ModelSerializer):
             "username": {"required": False, "allow_blank": True, "allow_null": True},
         }
 
+<<<<<<< HEAD
     def validate_email(self, v):
         if User.objects.filter(email=v).exists():
             raise serializers.ValidationError("이미 사용 중인 이메일입니다.")
@@ -188,22 +226,32 @@ class UserPostSummarySerializer(serializers.ModelSerializer):
         fields = ["id","title","content","created_at","like_count","comment_count"]
 
 # 신고
+=======
+
+>>>>>>> feature/hyoeun
 class ReportSerializer(serializers.ModelSerializer):
     reporter = serializers.HiddenField(default=serializers.CurrentUserDefault())
     class Meta:
         model = Report
         fields = "__all__"
 
+<<<<<<< HEAD
 # 검색 쿼리셋
 def search_users(q: str):
     # username이 비필수(null/blank)여도 안전 (null은 자동 제외)
     return User.objects.filter(Q(username__icontains=q) | Q(account_id__icontains=q))
+=======
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    posts = serializers.SerializerMethodField()
+>>>>>>> feature/hyoeun
 
 # 로그인(JWT 커스텀)
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     # 이메일로 로그인할 거라면 이거 필수
     username_field = "email"
 
+<<<<<<< HEAD
     def validate(self, attrs):
         email = attrs.get("email")
         pw = attrs.get("password")
@@ -213,3 +261,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         data.update({"user_id": self.user.id, "email": self.user.email, "message": "로그인 성공"})
         return data
+=======
+    def get_posts(self, obj):
+        posts = Post.objects.filter(author=obj)
+        return PostListSerializer(posts, many=True).data
+>>>>>>> feature/hyoeun

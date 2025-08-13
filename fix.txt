@@ -1,22 +1,3 @@
-AssertionError at /posts/1/edit/
-The field 'images_add' was declared on serializer PostWriteSerializer, but has not been included in the 'fields' option.
-Request Method:	GET
-Request URL:	http://localhost:8000/posts/1/edit/
-Django Version:	5.2.4
-Exception Type:	AssertionError
-Exception Value:	
-The field 'images_add' was declared on serializer PostWriteSerializer, but has not been included in the 'fields' option.
-Exception Location:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\rest_framework\serializers.py, line 1177, in get_field_names
-Raised during:	posts.views.PostUpdateDeleteView
-Python Executable:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Scripts\python.exe
-Python Version:	3.13.3
-Python Path:	
-['C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final project',
- 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\python313.zip',
- 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\DLLs',
- 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\Lib',
- 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313',
- 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final project\\venv',
- 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final '
- 'project\\venv\\Lib\\site-packages']
-Server time:	Tue, 12 Aug 2025 06:12:07 +0000
+  File "C:\Users\MIDI-PC\Desktop\backend\250729_final project\products\views.py", line 116
+    return obj
+IndentationError: unexpected indent

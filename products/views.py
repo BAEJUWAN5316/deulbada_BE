@@ -4,10 +4,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.exceptions import PermissionDenied
 
-from .models import Product
-from .serializers import ProductSerializer
-from .filters import ProductFilter # ProductFilter might need update too
-# from categories.models import Category # Removed
+from .models import Product, Tag
+from .serializers import ProductSerializer, ProductUpdateSerializer, TagSerializer
+from .filters import ProductFilter
 from users.models import User
 
 class CustomPagination(PageNumberPagination):
@@ -17,7 +16,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend]
-    filterset_class = ProductFilter # ProductFilter needs to be updated for new category field
+    filterset_class = ProductFilter
     pagination_class = CustomPagination
 
     def get_queryset(self):
@@ -40,8 +39,12 @@ class ProductListCreateView(generics.ListCreateAPIView):
 
 class ProductRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
-    serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return ProductUpdateSerializer
+        return ProductSerializer
 
     def get_object(self):
         obj = super().get_object()
@@ -55,3 +58,11 @@ class ProductRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_destroy(self, instance):
         instance.delete()
+
+class TagListAPIView(generics.ListAPIView):
+    """
+    A view to list all available tags.
+    """
+    queryset = Tag.objects.all().order_by('name')
+    serializer_class = TagSerializer
+    permission_classes = [permissions.AllowAny]

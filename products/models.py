@@ -3,6 +3,12 @@ from django.conf import settings
 from core.models.base import TimeStampedModel
 from categories.models import Category # Import Category to get ALL_CATEGORIES
 
+class Tag(models.Model):
+    name = models.CharField(max_length=50, unique=True, help_text="태그 이름")
+
+    def __str__(self):
+        return self.name
+
 class Product(TimeStampedModel):
     seller = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='products')
     name = models.CharField(max_length=100)
@@ -14,7 +20,7 @@ class Product(TimeStampedModel):
     region = models.CharField(max_length=50, blank=True)
     harvest_date = models.DateField(null=True, blank=True)
     sales_link = models.URLField(blank=True, null=True)
-    tags = models.CharField(max_length=255, blank=True)
+    tags = models.ManyToManyField(Tag, related_name="products", blank=True, help_text="상품에 연결된 태그 목록")
     category = models.CharField(max_length=100, choices=Category.ALL_CATEGORIES, blank=True, null=True) # New field
 
     def __str__(self):

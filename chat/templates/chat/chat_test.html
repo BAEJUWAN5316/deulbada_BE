@@ -5,16 +5,33 @@
     <title>Local WebSocket Test</title>
 </head>
 <body>
-    <h1>배포서버 WebSocket 테스트</h1>
-    <button id="sendBtn">메시지 보내기</button>
-    <ul id="messages"></ul>
+    <h1>WebSocket 테스트 - 수정</h1>
+    
+    <div id="chatSection">
+        <h3>채팅</h3>
+        <p><span id="tokenDisplay">로딩중...</span></p>
+        <button id="connectBtn">WebSocket 연결</button>
+        <button id="sendBtn" disabled>메시지 보내기</button>
+        <ul id="messages"></ul>
+    </div>
 
     <script>
         let socket;
+        let authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU1MDcyMTQwLCJpYXQiOjE3NTUwNzAzNDAsImp0aSI6ImE1MGNhNDMxN2FmODQ5YTFhN2FmN2NiNWU5MTRlZGMxIiwidXNlcl9pZCI6IjEifQ.htMfz-kuX1lbbn70B7QODC8urYPDLEaLlG72-vSWOVY";
 
         // DOM이 완전히 로드된 후 실행
         document.addEventListener('DOMContentLoaded', function() {
             console.log("DOM 로드 완료");
+            
+            // 토큰 표시
+            const tokenDisplay = document.getElementById('tokenDisplay');
+            if (authToken !== "여기에_JWT_토큰을_넣어주세요") {
+                tokenDisplay.textContent = authToken.substring(0, 20) + "...";
+                tokenDisplay.style.color = "green";
+            } else {
+                tokenDisplay.textContent = "토큰이 설정되지 않았습니다";
+                tokenDisplay.style.color = "red";
+            }
             
             function addMessage(text) {
                 const ul = document.getElementById("messages");
@@ -30,7 +47,7 @@
 
             function sendMessage() {
                 if (socket && socket.readyState === WebSocket.OPEN) {
-                    const message = { message: "로컬 테스트 메시지" };
+                    const message = { message: "JWT 토큰 테스트 메시지" };
                     socket.send(JSON.stringify(message));
                     console.log("📤 전송한 메시지:", message);
                     addMessage("📤 메시지 전송: " + message.message);
@@ -40,41 +57,61 @@
                 }
             }
 
+            function connectWebSocket() {
+                if (authToken === "여기에_JWT_토큰을_넣어주세요") {
+                    addMessage("❌ JWT 토큰을 먼저 설정해주세요!");
+                    return;
+                }
+
+                addMessage("🔄 WebSocket 연결 시도중...");
+
+                // WebSocket 연결 시 쿼리 파라미터로 토큰 전송
+                socket = new WebSocket(`ws://localhost:8000/ws/chat/1/?token=${authToken}`);
+
+                socket.onopen = () => {
+                    console.log("✅ 연결 성공");
+                    addMessage("✅ 서버에 연결되었습니다!");
+                    document.getElementById('sendBtn').disabled = false;
+                    document.getElementById('connectBtn').textContent = "연결됨";
+                    document.getElementById('connectBtn').disabled = true;
+                };
+
+                socket.onmessage = (e) => {
+                    console.log("📩 원본 데이터:", e.data);
+                    try {
+                        const data = JSON.parse(e.data);
+                        console.log("📩 파싱된 데이터:", data);
+                        addMessage(`📩 [${data.sender}]: ${data.message}`);
+                    } catch (error) {
+                        console.log("📩 JSON 파싱 실패, 원본 텍스트:", e.data);
+                        addMessage("📩 받은 메시지: " + e.data);
+                    }
+                };
+
+                socket.onerror = (e) => {
+                    console.error("❌ 오류:", e);
+                    addMessage("❌ WebSocket 오류 발생!");
+                };
+
+                socket.onclose = (e) => {
+                    console.log("🔌 연결 종료:", e.code, e.reason);
+                    addMessage(`🔌 연결 종료됨: ${e.code} - ${e.reason || 'Unknown'}`);
+                    document.getElementById('sendBtn').disabled = true;
+                    document.getElementById('connectBtn').textContent = "WebSocket 연결";
+                    document.getElementById('connectBtn').disabled = false;
+                };
+            }
+
             // 버튼 클릭 이벤트 추가
+            const connectBtn = document.getElementById("connectBtn");
             const sendBtn = document.getElementById("sendBtn");
+            
+            if (connectBtn) {
+                connectBtn.addEventListener('click', connectWebSocket);
+            }
             if (sendBtn) {
                 sendBtn.addEventListener('click', sendMessage);
             }
-
-            // WebSocket 연결
-            socket = new WebSocket("ws://43.201.70.73/ws/chat/1/");
-
-            socket.onopen = () => {
-                console.log("✅ 연결 성공");
-                addMessage("서버에 연결되었습니다!");
-            };
-
-            socket.onmessage = (e) => {
-                console.log("📩 원본 데이터:", e.data);
-                try {
-                    const data = JSON.parse(e.data);
-                    console.log("📩 파싱된 데이터:", data);
-                    addMessage(`[${data.sender}]: ${data.message}`);
-                } catch (error) {
-                    console.log("📩 JSON 파싱 실패, 원본 텍스트:", e.data);
-                    addMessage("받은 메시지: " + e.data);
-                }
-            };
-
-            socket.onerror = (e) => {
-                console.error("❌ 오류:", e);
-                addMessage("오류 발생!");
-            };
-
-            socket.onclose = (e) => {
-                console.log("🔌 연결 종료:", e.code, e.reason);
-                addMessage(`연결 종료됨: ${e.code}`);
-            };
         });
     </script>
 </body>

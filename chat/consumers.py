@@ -4,6 +4,9 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from .models import Message, ChatRoom
 from django.contrib.auth import get_user_model
 from asgiref.sync import sync_to_async
+from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from urllib.parse import parse_qs
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -12,6 +15,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f'chat_{self.room_name}'
+        
+        # JWT 토큰 인증
+        token = await self.get_token_from_query()
+        if token:
+            user = await self.authenticate_token(token)
+            if user:
+                self.scope['user'] = user
+                logger.info(f"✅ User {user.username} authenticated via JWT token")
+            else:
+                logger.warning("❌ Invalid JWT token")
+                await self.close(code=4001)
+                return
+        else:
+            logger.warning("❌ No JWT token provided")
+            await self.close(code=4001)
+            return
 
         await self.channel_layer.group_add(
             self.room_group_name,
@@ -19,6 +38,27 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
         await self.accept()
+        
+    async def get_token_from_query(self):
+        """쿼리 파라미터에서 JWT 토큰 추출"""
+        query_string = self.scope.get('query_string', b'').decode()
+        query_params = parse_qs(query_string)
+        token = query_params.get('token', [None])[0]
+        return token
+    
+    async def authenticate_token(self, token):
+        """JWT 토큰 인증 및 사용자 반환"""
+        try:
+            # JWT 토큰 검증
+            access_token = AccessToken(token)
+            user_id = access_token['user_id']
+            
+            # 사용자 객체 가져오기
+            user = await sync_to_async(User.objects.get)(id=user_id)
+            return user
+        except (InvalidToken, TokenError, User.DoesNotExist) as e:
+            logger.error(f"❌ Token authentication failed: {e}")
+            return None
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
@@ -34,9 +74,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             logger.info(f"✏️ Parsed message: {message_content}")
 
             user = self.scope['user']
-            if not user.is_authenticated:
-                logger.warning(f"Unauthenticated user tried to send message in room {self.room_name}")
-                return
+            # 연결 시 이미 인증을 완료했으므로 추가 인증 체크 불필요
 
             try:
                 chat_room = await sync_to_async(ChatRoom.objects.get)(id=self.room_name)

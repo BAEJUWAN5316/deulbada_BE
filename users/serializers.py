@@ -19,7 +19,6 @@ class SimpleUserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "account_id", "username", "profile_image", "is_following"]
         extra_kwargs = {
-            # username 비필수
             "username": {"required": False, "allow_blank": True, "allow_null": True},
         }
 
@@ -36,7 +35,6 @@ class UserSerializer(serializers.ModelSerializer):
             "follower_count", "following_count",
         ]
         extra_kwargs = {
-            # username 비필수
             "username": {"required": False, "allow_blank": True, "allow_null": True},
         }
 # =================================
@@ -48,7 +46,6 @@ class UserSignupSerializer(serializers.ModelSerializer):
         fields = ["email", "password", "account_id"]
         extra_kwargs = {
             "password": {"write_only": True},
-            # username 비필수
             "username": {"required": False, "allow_blank": True, "allow_null": True},
         }
 
@@ -58,10 +55,14 @@ class UserSignupSerializer(serializers.ModelSerializer):
         return v
 
     def validate_password(self, v):
-        if len(v) < 8: raise serializers.ValidationError("비밀번호는 최소 8자 이상.")
-        if not re.search(r"[A-Za-z]", v): raise serializers.ValidationError("영문자 포함 필수.")
-        if not re.search(r"\d", v):       raise serializers.ValidationError("숫자 포함 필수.")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v): raise serializers.ValidationError("특수문자 포함 필수.")
+        if len(v) < 8:
+            raise serializers.ValidationError("비밀번호는 최소 8자 이상.")
+        if not re.search(r"[A-Za-z]", v):
+            raise serializers.ValidationError("영문자 포함 필수.")
+        if not re.search(r"\d", v):
+            raise serializers.ValidationError("숫자 포함 필수.")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
+            raise serializers.ValidationError("특수문자 포함 필수.")
         return v
 
     def validate_account_id(self, v):
@@ -106,7 +107,8 @@ class ProducerSignupSerializer(UserSignupSerializer):
         profile.is_farm_owner = True
         profile.is_farm_verified = False
         for k, v in pf.items():
-            if v is not None: setattr(profile, k, v)
+            if v is not None:
+                setattr(profile, k, v)
         profile.save()
         return user
 
@@ -116,13 +118,13 @@ class ProfileSetupSerializer(serializers.ModelSerializer):
         model = User
         fields = ["username","account_id","introduction","profile_image"]
         extra_kwargs = {
-            # username 비필수
             "username": {"required": False, "allow_blank": True, "allow_null": True},
         }
 
     def validate_account_id(self, value):
         qs = User.objects.filter(account_id=value)
-        if self.instance: qs = qs.exclude(pk=self.instance.pk)
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
             raise serializers.ValidationError("이미 사용 중인 ID입니다.")
         return value
@@ -134,7 +136,8 @@ class ProfileSetupSerializer(serializers.ModelSerializer):
 
     def update(self, inst, data):
         for f in ["username","account_id","introduction","profile_image"]:
-            if f in data: setattr(inst, f, data[f])
+            if f in data:
+                setattr(inst, f, data[f])
         inst.is_profile_completed = True
         inst.save()
         return inst
@@ -148,7 +151,6 @@ class UserSearchSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id","account_id","username","profile_image","is_following"]
         extra_kwargs = {
-            # username 비필수
             "username": {"required": False, "allow_blank": True, "allow_null": True},
         }
 
@@ -167,7 +169,6 @@ class ProfilePageSerializer(serializers.ModelSerializer):
             "is_me","is_following",
         ]
         extra_kwargs = {
-            # username 비필수
             "username": {"required": False, "allow_blank": True, "allow_null": True},
         }
 
@@ -204,12 +205,34 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     # 이메일로 로그인할 거라면 이거 필수
     username_field = "email"
 
+    @classmethod
+    def get_token(cls, user):
+        """
+        선택: 토큰 클레임에 필요한 정보를 함께 실어두고 싶을 때.
+        (프론트에서 토큰 디코딩해 account_id/username을 쓰는 경우 유용)
+        """
+        token = super().get_token(user)
+        token["account_id"] = user.account_id
+        token["username"] = user.username
+        return token
+
     def validate(self, attrs):
         email = attrs.get("email")
         pw = attrs.get("password")
+
         user = authenticate(request=self.context.get("request"), email=email, password=pw)
         if not user:
-            raise serializers.ValidationError({"detail":"이메일 또는 비밀번호가 잘못되었습니다."})
+            raise serializers.ValidationError({"detail": "이메일 또는 비밀번호가 잘못되었습니다."})
+
+        # 부모가 access/refresh 생성 및 표준 응답 구성
         data = super().validate(attrs)
-        data.update({"user_id": self.user.id, "email": self.user.email, "message": "로그인 성공"})
+
+        # 로그인 응답 바디에 추가로 내려줄 필드들
+        data.update({
+            "user_id":    self.user.id,
+            "email":      self.user.email,
+            "account_id": self.user.account_id,      # 추가
+            "message":    "로그인 성공",
+        })
         return data
+

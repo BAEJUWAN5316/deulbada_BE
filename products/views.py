@@ -22,10 +22,10 @@ class ProductListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         qs = Product.objects.all()
 
-        # Filter by username from URL path
-        username = self.kwargs.get('username')
-        if username:
-            qs = qs.filter(seller__username=username)
+        # Filter by account_id from URL path
+        account_id = self.kwargs.get('account_id')
+        if account_id:
+            qs = qs.filter(seller__account_id=account_id)
 
         # Filter by category from URL path
         category_name = self.kwargs.get('category_name')

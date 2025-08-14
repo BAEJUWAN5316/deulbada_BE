@@ -81,6 +81,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
+    def get_profile_image_url(self, request=None):
+        if self.profile_image and hasattr(self.profile_image, 'url'):
+            if request:
+                return request.build_absolute_uri(self.profile_image.url)
+            return self.profile_image.url # Return relative if no request context
+        return None
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(

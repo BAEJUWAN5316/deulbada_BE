@@ -1,0 +1,11 @@
+// 상품 데이터 준비 (카테고리 분리 + 이미지 활성화)
+      const productData = {
+        name: name.trim(),
+        description: ${name.trim()} 상품입니다.,
+        sales_link: "https://example.com/",
+        price: parseInt(price.replace(/,/g, '')),
+        ...(imageUrl ? { image_urls: imageUrl } : {}),
+        category_type: businessType, // 1차 카테고리 (농산물/수산물)
+        category_name: businessName, // 2차 카테고리 (잎채소류, 과일류 등)
+        tags: tags.split(',').map((tag) => tag.trim()),
+      };

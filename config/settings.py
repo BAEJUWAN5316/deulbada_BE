@@ -35,7 +35,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['43.201.70.73', '127.0.0.1', 'localhost', 'https://deulbada.netlify.app', 'http://deulbada.netlify.app', 'netlify.app', 'http://deulbada.duckdns.org']
+ALLOWED_HOSTS = ['43.201.70.73', '127.0.0.1', 'localhost', 'deulbada.netlify.app', 'netlify.app', 'deulbada.duckdns.org']
 
 # Application definition
 

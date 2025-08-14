@@ -23,20 +23,40 @@ class SmallPagination(PageNumberPagination):
     page_size_query_param = "page_size"
     max_page_size = 50
 
-# 가입/로그인
+
+# ===== 가입/로그인 =====
 class SignupView(CreateAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = UserSignupSerializer
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["request"] = self.request
+        return ctx
+
 
 class ProducerSignupView(CreateAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = ProducerSignupSerializer
 
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["request"] = self.request
+        return ctx
+
+
 class CustomTokenObtainPairView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CustomTokenObtainPairSerializer
 
-# 중복 체크
+    def get_serializer_context(self):
+        # 로그인 응답 커스텀 필드에도 request가 필요할 수 있으니 통일
+        ctx = super().get_serializer_context()
+        ctx["request"] = self.request
+        return ctx
+
+
+# ===== 중복 체크 =====
 class EmailCheckView(APIView):
     permission_classes = [permissions.AllowAny]
     def get(self, request):
@@ -44,6 +64,7 @@ class EmailCheckView(APIView):
         if not email:
             return Response({"detail":"email 파라미터 필요"}, status=400)
         return Response({"exists": User.objects.filter(email=email).exists()})
+
 
 class AccountIdCheckView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -53,41 +74,64 @@ class AccountIdCheckView(APIView):
             return Response({"detail":"account_id 파라미터 필요"}, status=400)
         return Response({"exists": User.objects.filter(account_id=account_id).exists()})
 
-# 내 프로필
+
+# ===== 내 프로필 =====
 class MyProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
         me = (User.objects.filter(pk=request.user.pk)
-              .annotate(follower_count=Count("followed_by", distinct=True),
-                        following_count=Count("following", distinct=True))
+              .annotate(
+                  follower_count=Count("followed_by", distinct=True),
+                  following_count=Count("following", distinct=True)
+              )
               .first())
-        data = ProfilePageSerializer(me, context={"viewer": request.user}).data
-        return Response(data)
+        ser = ProfilePageSerializer(
+            me,
+            context={"viewer": request.user, "request": request}  #  request 추가
+        )
+        return Response(ser.data)
 
-# 프로필 설정/수정
+
+# ===== 프로필 설정/수정(일반 사용자) =====
 class ProfileSetupView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+
     def put(self, request):
-        ser = ProfileSetupSerializer(request.user, data=request.data)
+        ser = ProfileSetupSerializer(
+            request.user,
+            data=request.data,
+            context={"request": request}  #  request 추가
+        )
         ser.is_valid(raise_exception=True)
         ser.save()
         return Response(ser.data)
+
     patch = put
+
 
 class ProfileUpdateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+
     def patch(self, request):
-        ser = ProfileSetupSerializer(request.user, data=request.data, partial=True)
+        ser = ProfileSetupSerializer(
+            request.user,
+            data=request.data,
+            partial=True,
+            context={"request": request}  # request 추가
+        )
         ser.is_valid(raise_exception=True)
         ser.save()
         return Response(ser.data)
 
-# 농장주 프로필 작성/수정
+
+# ===== 농장주 프로필 작성/수정 =====
 class FarmOwnerProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+
     def put(self, request):
         pf, _ = UserProfile.objects.get_or_create(user=request.user)
-        for k in ["profile_image","bio","ceo_name","phone","business_number","address_postcode","address_line1","address_line2","business_doc"]:
+        for k in ["profile_image","bio","ceo_name","phone","business_number",
+                  "address_postcode","address_line1","address_line2","business_doc"]:
             if k in request.data:
                 setattr(pf, k, request.data[k])
         pf.is_farm_owner = True
@@ -96,18 +140,23 @@ class FarmOwnerProfileView(APIView):
             request.user.is_farm_owner = True
             request.user.save(update_fields=["is_farm_owner"])
         return Response({"message":"농장주 프로필 저장됨"})
+
     patch = put
 
-# 상대 프로필 (여긴 이미 is_following 처리 OK)
+
+# ===== 상대 프로필 (is_following 처리 포함) =====
 class ProfileRetrieveView(APIView):
     permission_classes = [permissions.AllowAny]
+
     def get(self, request, account_id):
         target = get_object_or_404(User, account_id=account_id)
         if request.user.is_authenticated:
             qs = User.objects.filter(pk=target.pk).annotate(
                 follower_count=Count("followed_by", distinct=True),
                 following_count=Count("following", distinct=True),
-                is_following=Exists(Follow.objects.filter(follower=request.user, following=OuterRef("pk"))),
+                is_following=Exists(Follow.objects.filter(
+                    follower=request.user, following=OuterRef("pk")
+                )),
             )
         else:
             qs = User.objects.filter(pk=target.pk).annotate(
@@ -116,10 +165,17 @@ class ProfileRetrieveView(APIView):
                 is_following=Value(False, output_field=BooleanField()),
             )
         obj = qs.first()
-        data = ProfilePageSerializer(obj, context={"viewer": request.user if request.user.is_authenticated else None}).data
-        return Response(data)
+        ser = ProfilePageSerializer(
+            obj,
+            context={
+                "viewer": request.user if request.user.is_authenticated else None,
+                "request": request,  # request 추가
+            }
+        )
+        return Response(ser.data)
 
-# 팔로워 목록(페이지네이션) — is_following 추가 + 정렬 안전하게
+
+# ===== 팔로워/팔로잉 목록 (페이지네이션) =====
 class FollowersListView(ListAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = UserSearchSerializer
@@ -139,7 +195,12 @@ class FollowersListView(ListAPIView):
                 is_following=Value(False, output_field=BooleanField())
             ).order_by("account_id")
 
-# 팔로잉 목록(페이지네이션) — is_following 추가 + 정렬 안전하게
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["request"] = self.request  #  request 추가 (절대경로용)
+        return ctx
+
+
 class FollowingListView(ListAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = UserSearchSerializer
@@ -159,6 +220,13 @@ class FollowingListView(ListAPIView):
                 is_following=Value(False, output_field=BooleanField())
             ).order_by("account_id")
 
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["request"] = self.request  #  request 추가
+        return ctx
+
+
+# ===== 팔로우 토글 =====
 class FollowToggleView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def post(self, request, account_id):
@@ -166,31 +234,50 @@ class FollowToggleView(APIView):
         if target == request.user:
             return Response({"detail":"자기 자신은 팔로우 불가"}, status=400)
         obj, created = Follow.objects.get_or_create(follower=request.user, following=target)
-        if created: return Response({"message":"팔로우 완료","is_following":True}, status=201)
-        obj.delete(); return Response({"message":"언팔로우 완료","is_following":False})
+        if created:
+            return Response({"message":"팔로우 완료","is_following":True}, status=201)
+        obj.delete()
+        return Response({"message":"언팔로우 완료","is_following":False})
 
-# 내가 쓴 글 리스트(페이지네이션 + 집계)
+
+# ===== 내가 쓴 글 리스트 (페이지네이션 + 집계) =====
 class MyPostsView(ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = SmallPagination
     from posts.serializers import PostListSerializer
     serializer_class = PostListSerializer
+
     def get_queryset(self):
         from django.db.models import Count
         return (Post.objects.filter(author=self.request.user)
-                .annotate(like_count=Count("likes", distinct=True), comment_count=Count("comments", distinct=True))
+                .annotate(like_count=Count("likes", distinct=True),
+                          comment_count=Count("comments", distinct=True))
                 .order_by("-created_at"))
 
-# 신고
+    def get_serializer_context(self):
+        # posts 시리얼라이저가 이미지 절대경로를 만들 수 있게
+        ctx = super().get_serializer_context()
+        ctx["request"] = self.request  #  request 추가
+        return ctx
+
+
+# ===== 신고 =====
 class ReportCreateAPIView(CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = ReportSerializer
 
-# 유저 검색(페이지네이션) — is_following 추가 + 정렬 변경
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["request"] = self.request  #  request 추가
+        return ctx
+
+
+# ===== 유저 검색 (페이지네이션) =====
 class UserSearchAPIView(ListAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = UserSearchSerializer
     pagination_class = SmallPagination
+
     def get_queryset(self):
         q = self.request.GET.get("q","").strip()
         if not q:
@@ -206,3 +293,8 @@ class UserSearchAPIView(ListAPIView):
             return base_qs.annotate(
                 is_following=Value(False, output_field=BooleanField())
             ).order_by("account_id")
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["request"] = self.request  # request 추가
+        return ctx

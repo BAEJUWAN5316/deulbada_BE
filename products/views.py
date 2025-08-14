@@ -30,7 +30,7 @@ class ProductListCreateView(generics.ListCreateAPIView):
         # Filter by category from URL path
         category_name = self.kwargs.get('category_name')
         if category_name:
-            qs = qs.filter(category=category_name)
+            qs = qs.filter(category__name=category_name)
 
         return qs
 

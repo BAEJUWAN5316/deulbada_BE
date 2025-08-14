@@ -83,6 +83,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Set maximum upload size to 5MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
+
 # CORS Headers
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173", # 프론트엔드 개발 서버 주소

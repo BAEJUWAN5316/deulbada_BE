@@ -1,19 +1,21 @@
 import re
 from django.contrib.auth import get_user_model, authenticate
-from django.db.models import Q, Count, Exists, OuterRef
+from django.db.models import Q
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import UserProfile, Report, Follow
+from .models import UserProfile, Report
 from posts.models import Post
 
 User = get_user_model()
 MAX_IMG = 5 * 1024 * 1024
 
+
 # ====== 추가: 유저 직렬화기들 ======
 class SimpleUserSerializer(serializers.ModelSerializer):
     # 팔로우 여부 (뷰에서 annotate로 주입됨)
     is_following = serializers.BooleanField(read_only=True, default=False)
+    profile_image = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -22,9 +24,17 @@ class SimpleUserSerializer(serializers.ModelSerializer):
             "username": {"required": False, "allow_blank": True, "allow_null": True},
         }
 
+    def get_profile_image(self, obj):
+        if obj.profile_image:
+            request = self.context.get("request")
+            return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
+        return None
+
+
 class UserSerializer(serializers.ModelSerializer):
     follower_count = serializers.IntegerField(read_only=True, required=False)
     following_count = serializers.IntegerField(read_only=True, required=False)
+    profile_image = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -37,7 +47,14 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "username": {"required": False, "allow_blank": True, "allow_null": True},
         }
+
+    def get_profile_image(self, obj):
+        if obj.profile_image:
+            request = self.context.get("request")
+            return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
+        return None
 # =================================
+
 
 # 회원가입
 class UserSignupSerializer(serializers.ModelSerializer):
@@ -71,8 +88,8 @@ class UserSignupSerializer(serializers.ModelSerializer):
         return v
 
     def create(self, validated_data):
-        # username 없어도 동작하도록 create_user로 위임
         return User.objects.create_user(**validated_data)
+
 
 # 생산자(농장주) 회원가입
 class ProducerSignupSerializer(UserSignupSerializer):
@@ -86,18 +103,20 @@ class ProducerSignupSerializer(UserSignupSerializer):
 
     class Meta(UserSignupSerializer.Meta):
         fields = UserSignupSerializer.Meta.fields + [
-            "ceo_name","phone","business_number","address_postcode","address_line1","address_line2","business_doc"
+            "ceo_name", "phone", "business_number", "address_postcode",
+            "address_line1", "address_line2", "business_doc"
         ]
 
     def validate(self, attrs):
-        for k in ["ceo_name","phone","business_number","address_postcode","address_line1"]:
+        for k in ["ceo_name", "phone", "business_number", "address_postcode", "address_line1"]:
             if not attrs.get(k):
-                raise serializers.ValidationError({k:"필수입력입니다."})
+                raise serializers.ValidationError({k: "필수입력입니다."})
         return attrs
 
     def create(self, validated_data):
         pf = {k: validated_data.pop(k, None) for k in [
-            "ceo_name","phone","business_number","address_postcode","address_line1","address_line2","business_doc"
+            "ceo_name", "phone", "business_number", "address_postcode",
+            "address_line1", "address_line2", "business_doc"
         ]}
         user = super().create(validated_data)
         user.is_farm_owner = True
@@ -112,11 +131,12 @@ class ProducerSignupSerializer(UserSignupSerializer):
         profile.save()
         return user
 
+
 # 프로필 초기 설정/수정
 class ProfileSetupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["username","account_id","introduction","profile_image"]
+        fields = ["username", "account_id", "introduction", "profile_image"]
         extra_kwargs = {
             "username": {"required": False, "allow_blank": True, "allow_null": True},
         }
@@ -135,82 +155,96 @@ class ProfileSetupSerializer(serializers.ModelSerializer):
         return img
 
     def update(self, inst, data):
-        for f in ["username","account_id","introduction","profile_image"]:
+        for f in ["username", "account_id", "introduction", "profile_image"]:
             if f in data:
                 setattr(inst, f, data[f])
         inst.is_profile_completed = True
         inst.save()
         return inst
 
+
 # 목록/검색용
 class UserSearchSerializer(serializers.ModelSerializer):
-    # 목록/검색에서도 팔로우 여부 내려감
     is_following = serializers.BooleanField(read_only=True, default=False)
+    profile_image = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["id","account_id","username","profile_image","is_following"]
+        fields = ["id", "account_id", "username", "profile_image", "is_following"]
         extra_kwargs = {
             "username": {"required": False, "allow_blank": True, "allow_null": True},
         }
 
-# 프로필 화면(내/상대 공용)
+    def get_profile_image(self, obj):
+        if obj.profile_image:
+            request = self.context.get("request")
+            return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
+        return None
+
+
+# 프로필 화면
 class ProfilePageSerializer(serializers.ModelSerializer):
     follower_count = serializers.IntegerField(read_only=True)
     following_count = serializers.IntegerField(read_only=True)
     is_me = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
+    profile_image = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
-            "id","account_id","username","nickname","profile_image","introduction",
-            "is_farm_owner","is_farm_verified","follower_count","following_count",
-            "is_me","is_following",
+            "id", "account_id", "username", "nickname", "profile_image", "introduction",
+            "is_farm_owner", "is_farm_verified", "follower_count", "following_count",
+            "is_me", "is_following",
         ]
         extra_kwargs = {
             "username": {"required": False, "allow_blank": True, "allow_null": True},
         }
+
+    def get_profile_image(self, obj):
+        if obj.profile_image:
+            request = self.context.get("request")
+            return request.build_absolute_uri(obj.profile_image.url) if request else obj.profile_image.url
+        return None
 
     def get_is_me(self, obj):
         viewer = self.context.get("viewer")
         return bool(viewer and viewer.id == obj.id)
 
     def get_is_following(self, obj):
-        # 뷰에서 annotate된 값을 그대로 사용, 없으면 False
         return bool(getattr(obj, "is_following", False))
 
-# 내가 쓴 글 리스트 응답용(포스트 시리얼라이저는 posts 앱에서)
+
+# 내가 쓴 글 리스트 응답용
 class UserPostSummarySerializer(serializers.ModelSerializer):
     like_count = serializers.IntegerField(read_only=True)
     comment_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Post
-        fields = ["id","title","content","created_at","like_count","comment_count"]
+        fields = ["id", "title", "content", "created_at", "like_count", "comment_count"]
+
 
 # 신고
 class ReportSerializer(serializers.ModelSerializer):
     reporter = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
     class Meta:
         model = Report
         fields = "__all__"
 
+
 # 검색 쿼리셋
 def search_users(q: str):
-    # username이 비필수(null/blank)여도 안전 (null은 자동 제외)
     return User.objects.filter(Q(username__icontains=q) | Q(account_id__icontains=q))
+
 
 # 로그인(JWT 커스텀)
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    # 이메일로 로그인할 거라면 이거 필수
     username_field = "email"
 
     @classmethod
     def get_token(cls, user):
-        """
-        선택: 토큰 클레임에 필요한 정보를 함께 실어두고 싶을 때.
-        (프론트에서 토큰 디코딩해 account_id/username을 쓰는 경우 유용)
-        """
         token = super().get_token(user)
         token["account_id"] = user.account_id
         token["username"] = user.username
@@ -224,15 +258,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         if not user:
             raise serializers.ValidationError({"detail": "이메일 또는 비밀번호가 잘못되었습니다."})
 
-        # 부모가 access/refresh 생성 및 표준 응답 구성
         data = super().validate(attrs)
-
-        # 로그인 응답 바디에 추가로 내려줄 필드들
         data.update({
-            "user_id":    self.user.id,
-            "email":      self.user.email,
-            "account_id": self.user.account_id,      # 추가
-            "message":    "로그인 성공",
+            "user_id": self.user.id,
+            "email": self.user.email,
+            "account_id": self.user.account_id,
+            "message": "로그인 성공",
         })
         return data
 

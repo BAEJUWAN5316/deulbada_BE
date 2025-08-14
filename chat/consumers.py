@@ -71,10 +71,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             text_data_json = json.loads(text_data)
             message_content = text_data_json.get('message')
-            logger.info(f"✏️ Parsed message: {message_content}")
+            image_url = text_data_json.get('image_url')  # Get image_url
+            logger.info(f"✏️ Parsed message: {message_content}, image_url: {image_url}")
 
             user = self.scope['user']
-            # 연결 시 이미 인증을 완료했으므로 추가 인증 체크 불필요
 
             try:
                 chat_room = await sync_to_async(ChatRoom.objects.get)(id=self.room_name)
@@ -82,19 +82,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 logger.error(f"ChatRoom with ID {self.room_name} does not exist.")
                 return
 
+            # Create message with content and image_url
             await sync_to_async(Message.objects.create)(
                 room=chat_room,
                 sender=user,
-                content=message_content
+                content=message_content,
+                image_url=image_url
             )
             logger.info(f"💾 Message saved to DB for room {self.room_name}")
 
+            # Broadcast with image_url
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'chat_message',  # Use underscore instead of dot
+                    'type': 'chat_message',
                     'message': message_content,
-                    'sender': user.username
+                    'sender': user.username,
+                    'image_url': image_url
                 }
             )
             logger.info(f"✅ Message broadcast initiated for group {self.room_group_name}")
@@ -105,9 +109,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def chat_message(self, event):
         message = event['message']
         sender = event['sender']
+        image_url = event.get('image_url') # Get image_url from event
 
+        # Send all fields to client
         await self.send(text_data=json.dumps({
             'message': message,
-            'sender': sender
+            'sender': sender,
+            'image_url': image_url
         }))
         logger.info(f"📤 Sent message to WebSocket client in room {self.room_name}")

@@ -1,3 +1,2 @@
-ubuntu@ip-172-26-9-152:~$ ls -l /etc/nginx/sites-enabled/
-total 0
-lrwxrwxrwx 1 root root 34 Jul 24 15:01 default -> /etc/nginx/sites-available/default
+이미지 업로드 후에 WebSocket으로 메시지 브로드캐스트가 안 되고 있어요.
+image_url 필드를 포함한 메시지를 WebSocket consumer에서 전송해주세요.

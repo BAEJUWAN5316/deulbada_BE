@@ -35,7 +35,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['43.201.70.73', '127.0.0.1', 'localhost', 'https://deulbada.netlify.app', 'http://deulbada.netlify.app', 'netlify.app']
+ALLOWED_HOSTS = ['43.201.70.73', '127.0.0.1', 'localhost', 'https://deulbada.netlify.app', 'http://deulbada.netlify.app', 'netlify.app', 'http://deulbada.duckdns.org', 'https://d7c5bebedc7a.ngrok-free.app']
 
 # Application definition
 
@@ -93,6 +93,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     'https://deulbada.netlify.app', 
     'http://deulbada.netlify.app', 
+    'http://deulbada.duckdns.org',
+    'https://d7c5bebedc7a.ngrok-free.app',
     # 'netlify.app',
     # 여기에 실제 프론트엔드 배포 도메인을 추가해야 합니다.
 ]

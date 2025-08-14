@@ -15,13 +15,13 @@ class Product(TimeStampedModel):
     description = models.TextField()
     price = models.PositiveIntegerField()
     is_sold = models.BooleanField(default=False)
-    image_urls = models.URLField(default=list, blank=True)
+    image_urls = models.URLField(blank=True)
     variety = models.CharField(max_length=50, blank=True)
     region = models.CharField(max_length=50, blank=True)
     harvest_date = models.DateField(null=True, blank=True)
     sales_link = models.URLField(blank=True, null=True)
     tags = models.ManyToManyField(Tag, related_name="products", blank=True, help_text="상품에 연결된 태그 목록")
-    category = models.CharField(max_length=100, choices=Category.ALL_CATEGORIES, blank=True, null=True) # New field
+    category = models.ForeignKey('categories.Category', on_delete=models.SET_NULL, null=True, blank=True, related_name='products') # New field
 
     def __str__(self):
         return f"[{self.name}] 판매자: {self.seller.username}"

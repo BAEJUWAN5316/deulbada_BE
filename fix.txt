@@ -1,2 +1,22 @@
-이미지 업로드 후에 WebSocket으로 메시지 브로드캐스트가 안 되고 있어요.
-image_url 필드를 포함한 메시지를 WebSocket consumer에서 전송해주세요.
+IntegrityError at /admin/products/product/add/
+NOT NULL constraint failed: products_product.tags
+Request Method:	POST
+Request URL:	http://127.0.0.1:8000/admin/products/product/add/
+Django Version:	5.2.4
+Exception Type:	IntegrityError
+Exception Value:	
+NOT NULL constraint failed: products_product.tags
+Exception Location:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\db\backends\sqlite3\base.py, line 360, in execute
+Raised during:	django.contrib.admin.options.add_view
+Python Executable:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Scripts\python.exe
+Python Version:	3.13.3
+Python Path:	
+['C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final project',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\python313.zip',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\DLLs',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\Lib',
+ 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313',
+ 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final project\\venv',
+ 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final '
+ 'project\\venv\\Lib\\site-packages']
+Server time:	Thu, 14 Aug 2025 05:11:01 +0000

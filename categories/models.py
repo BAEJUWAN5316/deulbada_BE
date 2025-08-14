@@ -30,4 +30,4 @@ class Category(TimeStampedModel):
         verbose_name_plural = "Categories"
 
     def __str__(self):
-        return self.name
+        return f"{self.get_type_display()} - {self.name}"

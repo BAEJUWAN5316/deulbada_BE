@@ -27,7 +27,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'seller', 'seller_username', 'is_seller_verified', 'name', 'description', 'price',
-            'image_urls', 'variety', 'region', 'harvest_date', 'created_at', 'updated_at',
+            'image_urls', 'variety', 'region', 'harvest_date', 'sales_link', 'created_at', 'updated_at',
             'category_type', 'category_name', 'category_id', 'tags', 'tag_input'
         ]
         read_only_fields = ['seller', 'created_at']
@@ -77,7 +77,7 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'name', 'description', 'price', 'image_urls', 'variety', 'region',
-            'harvest_date', 'category_id', 'tags', 'tag_input'
+            'harvest_date', 'sales_link', 'category_id', 'tags', 'tag_input'
         ]
 
     def to_representation(self, instance):
@@ -111,4 +111,3 @@ class ProductUpdateSerializer(serializers.ModelSerializer):
             self._handle_tags(instance, tag_input)
             
         return instance
-

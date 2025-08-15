@@ -1,22 +1,37 @@
-IntegrityError at /admin/products/product/add/
-NOT NULL constraint failed: products_product.tags
-Request Method:	POST
-Request URL:	http://127.0.0.1:8000/admin/products/product/add/
-Django Version:	5.2.4
-Exception Type:	IntegrityError
-Exception Value:	
-NOT NULL constraint failed: products_product.tags
-Exception Location:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Lib\site-packages\django\db\backends\sqlite3\base.py, line 360, in execute
-Raised during:	django.contrib.admin.options.add_view
-Python Executable:	C:\Users\MIDI-PC\Desktop\backend\250729_final project\venv\Scripts\python.exe
-Python Version:	3.13.3
-Python Path:	
-['C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final project',
- 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\python313.zip',
- 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\DLLs',
- 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313\\Lib',
- 'C:\\Users\\MIDI-PC\\AppData\\Local\\Programs\\Python\\Python313',
- 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final project\\venv',
- 'C:\\Users\\MIDI-PC\\Desktop\\backend\\250729_final '
- 'project\\venv\\Lib\\site-packages']
-Server time:	Thu, 14 Aug 2025 05:11:01 +0000
+server {
+    listen 80;
+    server_name 43.201.70.73; # 서버 IP 주소
+
+    client_max_body_size 5M; # 파일 업로드 용량 제한 (이전에 설정했던 값)
+
+    # 정적 파일 처리
+    location /static/ {
+        alias /home/ubuntu/deulbada_BE/staticfiles/;
+    }
+
+    # 미디어 파일 처리
+    location /media/ {
+        alias /home/ubuntu/deulbada_BE/media/;
+    }
+
+    # 🌐 WebSocket 요청은 Daphne으로 전달
+    location /ws/ {
+        proxy_pass http://127.0.0.1:8001; # Daphne 포트
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # 일반 HTTP 요청은 Gunicorn으로 전달
+    location / {
+        proxy_pass http://127.0.0.1:8000; # Gunicorn 포트
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

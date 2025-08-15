@@ -60,10 +60,12 @@ class UserSerializer(serializers.ModelSerializer):
 class UserSignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["email", "password", "account_id"]
+        #  username, nickname 추가 (선택 입력)
+        fields = ["email", "password", "account_id", "username", "nickname"]
         extra_kwargs = {
             "password": {"write_only": True},
             "username": {"required": False, "allow_blank": True, "allow_null": True},
+            "nickname": {"required": False, "allow_blank": True, "allow_null": True},
         }
 
     def validate_email(self, v):
@@ -88,6 +90,7 @@ class UserSignupSerializer(serializers.ModelSerializer):
         return v
 
     def create(self, validated_data):
+        # create_user가 username/nickname도 함께 저장합니다.
         return User.objects.create_user(**validated_data)
 
 
@@ -102,6 +105,7 @@ class ProducerSignupSerializer(UserSignupSerializer):
     business_doc = serializers.FileField(write_only=True, required=False)
 
     class Meta(UserSignupSerializer.Meta):
+        #  부모(UserSignupSerializer)의 fields(= username/nickname 포함) + 생산자 전용 필드
         fields = UserSignupSerializer.Meta.fields + [
             "ceo_name", "phone", "business_number", "address_postcode",
             "address_line1", "address_line2", "business_doc"
@@ -236,7 +240,10 @@ class ReportSerializer(serializers.ModelSerializer):
 
 # 검색 쿼리셋
 def search_users(q: str):
-    return User.objects.filter(Q(username__icontains=q) | Q(account_id__icontains=q))
+    
+    return User.objects.filter(
+        Q(username__icontains=q) | Q(account_id__icontains=q) | Q(nickname__icontains=q)
+    )
 
 
 # 로그인(JWT 커스텀)
@@ -266,4 +273,3 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             "message": "로그인 성공",
         })
         return data
-

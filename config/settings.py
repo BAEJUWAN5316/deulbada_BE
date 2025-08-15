@@ -37,6 +37,10 @@ DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = ['43.201.70.73', '127.0.0.1', 'localhost', 'deulbada.netlify.app', 'netlify.app', 'deulbada.duckdns.org']
 
+# Proxy settings
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PROTO = True
+
 # Application definition
 
 INSTALLED_APPS = [

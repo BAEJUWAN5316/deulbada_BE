@@ -32,6 +32,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close(code=4001)
             return
 
+        # Check if the user is a member of the chat room
+        is_member = await self.is_chat_room_member(self.scope['user'], self.room_name)
+        if not is_member:
+            logger.warning(f"User {self.scope['user'].username} is not a member of chat room {self.room_name}")
+            await self.close(code=4003) # 4003: Permission Denied
+            return
+
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
@@ -59,6 +66,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except (InvalidToken, TokenError, User.DoesNotExist) as e:
             logger.error(f"❌ Token authentication failed: {e}")
             return None
+
+    @sync_to_async
+    def is_chat_room_member(self, user, room_id):
+        """사용자가 채팅방의 멤버인지 확인"""
+        try:
+            room = ChatRoom.objects.get(id=room_id)
+            return user == room.user1 or user == room.user2
+        except ChatRoom.DoesNotExist:
+            return False
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(

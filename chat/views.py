@@ -2,16 +2,23 @@
 from rest_framework import generics, permissions
 from .models import ChatRoom, Message
 from .serializers import ChatRoomSerializer, MessageSerializer
+from django.db.models import Q
 
 class ChatRoomListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
-    queryset = ChatRoom.objects.all()
     serializer_class = ChatRoomSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return ChatRoom.objects.filter(Q(user1=user) | Q(user2=user))
 
 class ChatRoomRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
-    queryset = ChatRoom.objects.all()
     serializer_class = ChatRoomSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return ChatRoom.objects.filter(Q(user1=user) | Q(user2=user))
 
 class MessageListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]

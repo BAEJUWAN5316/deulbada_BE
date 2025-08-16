@@ -90,7 +90,51 @@
 ---
 
 ## 10. 🏗️ 프로젝트 아키텍처
-[프로젝트 아키텍처 다이어그램을 삽입하거나 설명을 입력해주세요.]
+본 프로젝트는 AWS Lightsail 가상 서버에 Ubuntu OS를 기반으로 배포되었습니다. Nginx를 웹 서버 및 리버스 프록시로 사용하여 요청을 분산하고, Gunicorn과 Daphne을 각각 WSGI, ASGI 서버로 두어 동기 및 비동기 요청을 효율적으로 처리합니다.
+
+### 요청 흐름도
+```mermaid
+graph TD
+    subgraph "사용자 환경"
+        User[클라이언트 (웹/앱)]
+    end
+
+    subgraph "인터넷"
+        DuckDNS[DuckDNS]
+    end
+
+    subgraph "AWS Lightsail (Ubuntu)"
+        Nginx[Nginx 웹 서버]
+        Gunicorn[Gunicorn (WSGI)]
+        Daphne[Daphne (ASGI)]
+        Django[Django 애플리케이션]
+        SQLite[SQLite DB]
+    end
+
+    User -- HTTPS 요청 --> DuckDNS
+    DuckDNS -- 도메인 연결 --> Nginx
+
+    Nginx -- "정적 파일 요청" --> Nginx
+    Nginx -- "HTTP API 요청 (e.g., /api/)" --> Gunicorn
+    Nginx -- "WebSocket 요청 (/ws/)" --> Daphne
+
+    Gunicorn --> Django
+    Daphne --> Django
+
+    Django <--> SQLite
+```
+
+### 컴포넌트별 역할
+*   **DuckDNS:** Lightsail 인스턴스의 유동 IP에 고정된 도메인 이름을 제공하여 사용자가 쉽게 서비스에 접근할 수 있도록 합니다.
+*   **Nginx:**
+    *   **리버스 프록시:** 외부의 모든 HTTP(80) 및 HTTPS(443) 요청을 받아 내부 애플리케이션 서버로 전달합니다.
+    *   **요청 분기:** 요청 경로에 따라 일반 API 요청은 Gunicorn으로, WebSocket 관련 요청은 Daphne으로 전달하여 트래픽을 효율적으로 분배합니다.
+    *   **정적 파일 서빙:** `collectstatic`으로 수집된 정적 파일(CSS, JS 등)을 Django를 거치지 않고 직접 서빙하여 부하를 줄입니다.
+    *   **SSL/TLS 처리:** Let's Encrypt로 발급받은 인증서를 사용하여 HTTPS 통신을 암호화합니다.
+*   **Gunicorn:** WSGI(Web Server Gateway Interface) 서버로서, Nginx로부터 전달받은 동기적인 HTTP 요청을 처리하여 Django 애플리케이션과 통신합니다.
+*   **Daphne:** ASGI(Asynchronous Server Gateway Interface) 서버로서, 실시간 채팅을 위한 WebSocket 연결(`wss://`)을 처리합니다. Nginx로부터 전달받은 비동기 요청을 Django Channels와 연결합니다.
+*   **Django Application:** 프로젝트의 핵심 비즈니스 로직을 처리하는 메인 애플리케이션입니다.
+*   **SQLite:** 개발 및 소규모 운영 환경에서의 데이터 저장을 위한 경량 데이터베이스입니다.
 
 ---
 
@@ -289,7 +333,40 @@ C:.
 ---
 
 ## 15. 🧩 Coding Convention
-[프로젝트 코딩 컨벤션에 대한 링크나 설명을 입력해주세요.]
+이 프로젝트는 일관성 있고 가독성 높은 코드 품질을 유지하기 위해 다음과 같은 코딩 컨벤션을 따릅니다.
+
+### 1. 일반 원칙
+*   **Linter:** `flake8` 또는 `ruff`를 사용하여 코드 스타일을 검사합니다. (PEP 8 준수)
+*   **Line Length:** 한 줄의 최대 길이는 120자로 제한합니다.
+*   **Imports:** `isort` 규칙에 따라 다음 순서로 그룹화하여 정렬합니다.
+    1.  Standard Library (e.g., `json`, `os`)
+    2.  Third-Party Libraries (e.g., `django`, `rest_framework`)
+    3.  Local Application Imports (e.g., `from users.models import User`)
+
+### 2. 네이밍 컨벤션 (Naming Convention)
+*   **변수, 함수:** `snake_case` (e.g., `room_name`, `get_queryset`)
+*   **클래스, 모델:** `PascalCase` (e.g., `ChatRoom`, `ProductSerializer`)
+*   **상수:** `UPPER_SNAKE_CASE` (e.g., `MAX_UPLOAD_SIZE`)
+*   **URL 이름:** `kebab-case` (e.g., `name='product-list-create'`)
+
+### 3. Django & DRF
+*   **모델:**
+    *   모든 모델은 `core.models.base.TimeStampedModel`을 상속하여 `created_at`과 `updated_at` 필드를 자동으로 포함합니다.
+    *   `related_name`은 명확하게 지정하여 역참조 시 혼동을 방지합니다.
+*   **뷰 (Views):**
+    *   기능별로 명확하게 분리하기 위해 Class-Based Views (CBV) 사용을 원칙으로 합니다.
+    *   DRF의 `generics` API View (`ListCreateAPIView`, `RetrieveUpdateDestroyAPIView` 등)를 적극 활용합니다.
+*   **시리얼라이저 (Serializers):**
+    *   `ModelSerializer`를 기본으로 사용하며, 커스텀 필드가 필요할 경우 `SerializerMethodField`를 활용합니다.
+    *   `Meta` 클래스 내 `fields`에는 필요한 필드만 명시적으로 선언합니다. (`'__all__'` 사용 지양)
+
+### 4. 커밋 메시지
+Conventional Commits 명세를 따릅니다. 커밋 메시지는 다음 형식으로 작성합니다.
+```
+<type>(<scope>): <subject>
+```
+*   **Types:** `feat`(기능), `fix`(버그), `docs`(문서), `style`, `refactor`, `test`, `chore`(기타) 등
+*   **Example:** `feat(chat): Add permission check to ChatConsumer`
 
 ---
 

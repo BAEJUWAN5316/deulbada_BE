@@ -92,37 +92,7 @@
 ## 10. 🏗️ 프로젝트 아키텍처
 본 프로젝트는 AWS Lightsail 가상 서버에 Ubuntu OS를 기반으로 배포되었습니다. Nginx를 웹 서버 및 리버스 프록시로 사용하여 요청을 분산하고, Gunicorn과 Daphne을 각각 WSGI, ASGI 서버로 두어 동기 및 비동기 요청을 효율적으로 처리합니다.
 
-### 요청 흐름도
-```mermaid
-graph TD
-    subgraph "사용자 환경"
-        User[클라이언트 (웹/앱)]
-    end
-
-    subgraph "인터넷"
-        DuckDNS[DuckDNS]
-    end
-
-    subgraph "AWS Lightsail (Ubuntu)"
-        Nginx[Nginx 웹 서버]
-        Gunicorn[Gunicorn (WSGI)]
-        Daphne[Daphne (ASGI)]
-        Django[Django 애플리케이션]
-        SQLite[SQLite DB]
-    end
-
-    User -- HTTPS 요청 --> DuckDNS
-    DuckDNS -- 도메인 연결 --> Nginx
-
-    Nginx -- "정적 파일 요청" --> Nginx
-    Nginx -- "HTTP API 요청 (e.g., /api/)" --> Gunicorn
-    Nginx -- "WebSocket 요청 (/ws/)" --> Daphne
-
-    Gunicorn --> Django
-    Daphne --> Django
-
-    Django <--> SQLite
-```
+![alt text](아키텍처.PNG)
 
 ### 컴포넌트별 역할
 *   **DuckDNS:** Lightsail 인스턴스의 유동 IP에 고정된 도메인 이름을 제공하여 사용자가 쉽게 서비스에 접근할 수 있도록 합니다.

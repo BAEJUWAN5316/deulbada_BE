@@ -52,7 +52,7 @@
 ## 5. 🛠️ 기술 스택
 *   **Backend:** Django, Django REST Framework, Django Channels
 *   **Database:** SQLite
-*   **Infrastructure:** Nginx, Daphne, Gunicorn, AWS S3
+*   **Infrastructure:** Nginx, Daphne, Gunicorn
 *   **Authentication:** djangorestframework-simplejwt (JWT)
 *   **API Documentation:** drf-yasg (Swagger)
 *   **Others:** Pillow, django-filter, django-cors-headers
